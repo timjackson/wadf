@@ -809,8 +809,7 @@ class Tools_WADF {
 		if ($svn_action == 'checkout') {
 			$this->_rmDir($destdir);
 		} else {
-			// FIXME: we should do a wadf-clean before doing an svn sw, to stop
-			// errors about "file already exists" in some cases
+			$this->cleanGeneratedFiles($destdir);
 		}
 		
 		$svn_full_path = "$vc_base/$this->appref/$svn_path";

@@ -8,10 +8,13 @@ New features:
 - #203: Add workaround for PEAR bug #13425 (Dep package install fails when 2 
   vers of dep exist, even when depchain is OK)
 - #201: Allow wadf-undeploy to take "-d opt=value" options
-- #205: Add workaround for PEAR bug #13427 (<max> does not completely exclude dep versions from consideration) when installing deps
+- #205: Add workaround for PEAR bug #13427 (<max> does not completely exclude 
+  dep versions from consideration) when installing deps
 
 Bugs fixed:
 - #187: wadf-undeploy does not correctly remove databases
+- #207: Reprocess fails if switching to a new tag/branch, and some generated 
+  files conflict with newly-added files in version control
 
 Changes/improvements:
 - #175: Deploying a database without a schema.sql fails even if dbX_schema is 
