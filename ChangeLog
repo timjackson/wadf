@@ -26,6 +26,7 @@ Changes/improvements:
 - #196: Rewrite template handling to remove dependency on UNIX "find" command
   (for portability)
 - #198: Improve general error handling
+- #204: Make text output and word wrapping respect console size
 
 #######################################################################
 # v0.11.2 (11 Feb 2009)

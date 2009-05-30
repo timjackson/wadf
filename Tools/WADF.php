@@ -2010,7 +2010,7 @@ class Tools_WADF {
 					} else {
 						$msg .= ": \n";
 					}
-					print wordwrap($msg, 80);
+					$this->consoleOutput($msg);
 					$input = trim(fgets(STDIN));
 					$input_values[$key] = $input;
 					
@@ -2184,7 +2184,7 @@ class Tools_WADF {
 	protected function _debugOutput($string, $level=self::DEBUG_GENERAL)
 	{
 		if ($level < $this->_debug) {
-			print rtrim($string) . "\n";
+			$this->consoleOutput($string);
 		}
 	}
 	
@@ -2387,8 +2387,18 @@ class Tools_WADF {
 	// Used by the command line programs
 	public static function cmdlineHandleException(Exception $e)
 	{
-		print $e->getMessage() . "\n";
+		$this->consoleOutput($e->getMessage());
 		exit(1);
+	}
+	
+	public static function consoleOutput($msg)
+	{
+		$console_width = 80;
+		@exec('stty size 2>&1', $out, $ret);
+		if ($ret == 0) {
+			list($rows, $console_width) = explode(' ', $out[0]);
+		}
+		print wordwrap(rtrim($msg), $console_width) . "\n";	
 	}
 }
 
