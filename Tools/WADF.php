@@ -2006,9 +2006,9 @@ class Tools_WADF {
 					$msg = "Please enter $key_name";
 					if ($extra_info) $msg .= " ($extra_info)";
 					if (!empty($notes)) {
-						$msg .= "\nNotes: $notes\n";
+						$msg .= "\nNotes: $notes";
 					} else {
-						$msg .= ": \n";
+						$msg .= ": ";
 					}
 					$this->consoleOutput($msg);
 					$input = trim(fgets(STDIN));
