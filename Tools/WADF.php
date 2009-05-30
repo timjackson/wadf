@@ -1507,7 +1507,7 @@ class Tools_WADF {
 				} else {
 					$warnings[] = $m[1];
 				}
-			} else if ($workaround_pear_bugs && preg_match('#^Duplicate package (channel://[^/]+/[^-]+)-(.+) found#', $line, $m)) {
+			} else if ($workaround_pear_bugs && preg_match('#^Duplicate package channel://([^/]+/[^-]+)-(.+) found#', $line, $m)) {
 				$duplicate_packages[$m[1]][] = $m[2];
 			} elseif (!$strip || !preg_match($strip, $line)) {
 				if ($output) $this->_debugOutput("\t" . $line, self::DEBUG_GENERAL);
