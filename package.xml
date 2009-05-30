@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>Tools_WADF</name>
+ <channel>pear.timj.co.uk</channel>
+ <summary>WADF Web Deployment Framework</summary>
+ <description>WADF Web Deployment Framework</description>
+ <lead>
+  <name>Tim Jackson</name>
+  <user>timj</user>
+  <email>tim@timj.co.uk</email>
+  <active>yes</active>
+ </lead>
+ <date>2009-05-30</date>
+ <version>
+  <release>0.11.3a</release>
+  <api>0.11.3a</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license>GPLv3</license>
+ <notes>N/A</notes>
+ <contents>
+  <dir name="/" baseinstalldir="/">
+  	<file name="httpd.conf.sample" role="cfg"/>
+  	<file name="wadf.conf" role="cfg"/>
+  	<file name="wadf-clean" role="script">
+	  	<tasks:replace from="@php_dir@" to="php_dir" type="pear-config"/>
+    </file>
+  	<file name="wadf-list-macros" role="script">
+	  	<tasks:replace from="@php_dir@" to="php_dir" type="pear-config"/>
+	</file>
+  	<file name="wadf-reprocess" role="script">
+	  	<tasks:replace from="@php_dir@" to="php_dir" type="pear-config"/>
+  	</file>
+  	<file name="wadf-deploy" role="script">
+	  	<tasks:replace from="@php_dir@" to="php_dir" type="pear-config"/>
+  	</file>
+  	<file name="wadf-httpd" role="script">
+	  	<tasks:replace from="@php_dir@" to="php_dir" type="pear-config"/>
+  		<tasks:replace from="@cfg_dir@" to="cfg_dir" type="pear-config"/>
+  	</file>
+  	<file name="wadf-undeploy" role="script">
+	  	<tasks:replace from="@php_dir@" to="php_dir" type="pear-config"/>
+  	</file>
+  	<file name="ChangeLog" role="doc"/>
+  	<file name="COPYING" role="doc"/>
+	<dir name="Tools">
+		<file name="WADF.php" role="php">
+			<tasks:replace from="@cfg_dir@" to="cfg_dir" type="pear-config"/>
+			<tasks:replace from="@package_version@" to="version" type="package-info"/>
+		</file>
+  	</dir>
+  	<dir name="docs">
+	  	<file name="Credits.txt" role="doc"/>
+  		<file name="wadf.txt" role="doc"/>
+  		<file name="wadf-workstation-howto.txt" role="doc"/>
+  		<file name="Upgrading.txt" role="doc"/>
+  	</dir>
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.1.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.7.0RC2</min>
+   </pearinstaller>
+   <package>
+   	<name>Console_Getopt</name>
+   	<channel>pear.php.net</channel>
+   	<min>1.2.3</min>
+   </package>
+   <package>
+   	<name>PEAR</name>
+   	<channel>pear.php.net</channel>
+   	<min>1.7.0RC2</min>
+   </package>
+   <extension>
+   	<name>pcre</name>
+   </extension>
+  </required>
+  <optional>
+  	<extension>
+  		<name>mysql</name>
+  	</extension>
+  </optional>
+ </dependencies>
+ <phprelease />
+</package>

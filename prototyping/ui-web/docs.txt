@@ -1,0 +1,35 @@
+To distribute an application onto the staging server, you need to check it into SVN. Convention for the SVN repo is:
+
+[clientname]/[sitename]
+which translates into an "app reference" (appref) of clientname-sitename
+
+Then go to 
+
+www.example.com/deploy
+
+and enter:
+
+- SVN revision number
+- app reference
+
+Staging will then check out clientname/sitename -r [rev] to /foo/bar/clientname/sitename
+
+
+
+Two database servers are available in the office:
+- Dev
+- Staging
+These may run the same version, or the dev one may be newer (e.g. MySQL 5 while Staging is running MySQL 4).
+
+You can access the database servers directly via:
+
+mysql.dev.example.com
+mysql.staging.example.com
+
+for *development* purposes.
+
+On the staging server you may also choose to:
+
+- pull a complete named database from dev
+- pull an empty database (schema only) from dev
+- diff two database schemas

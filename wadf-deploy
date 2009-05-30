@@ -1,0 +1,117 @@
+#!/usr/bin/php
+<?php
+
+/*
+    Web Application Deployment Framework
+    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of version 3 of the GNU General Public License as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+set_include_path('.:@php_dir@');
+
+require_once('Tools/WADF.php');
+require_once 'Console/Getopt.php'; // this is from PEAR
+
+set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
+
+$con = new Console_Getopt;
+$args = $con->readPHPArgv();
+array_shift($args);
+$options = $con->getopt2($args, 'r:d:vV', array('no-db'));
+
+$usage_text = "Usage: wadf-deploy [-r revision; default HEAD] appref [version e.g. trunk, tag/release-1.2.3 - default 'trunk']\n";
+
+if (PEAR::isError($options)) {
+	print $usage_text;
+	exit(5);
+}
+
+$wadf_macros = array();
+$rev = 'HEAD';
+$debug = false;
+$db_deploy_prompt = true;
+// iterate over options
+foreach ($options[0] as $option) {
+	if ($option[0] == 'r') {
+		$rev = $option[1];
+	} else if ($option[0] == 'd') {
+		if (preg_match('/^(\S+)=(.+)$/', $option[1], $matches)) {
+			if ($matches[1] == 'appref') {
+				print wordwrap("Passing '-d appref=XYZ' on the command line does not make sense, because the application reference is passed in as a parameter. Depending on what you want to do, you may want to use '-d instance=XYZ' instead.\n");
+				exit(5);
+			}
+			$wadf_macros[$matches[1]] = $matches[2];
+		} else {
+			print "Malformed option '-d " . $option[1] . "'\n";
+			exit(5);
+		}
+	} else if ($option[0] == 'v') {
+		$debug = true;
+	} else if ($option[0] == 'V') {
+		print Tools_WADF::getAboutText();
+		exit(0);
+	} else if ($option[0] == '--no-db') {
+		$db_deploy_prompt = false;
+	}
+}
+
+// [1] is the array of non-option parameters
+// [0] is the first param
+if (!isset($options[1][0])) {
+	 print $usage_text;
+	 exit(5);
+} else {
+	$appname = $options[1][0];
+}
+
+if ($debug) {
+	$initial_output_level = Tools_WADF::OUTPUT_VERBOSE;
+} else {
+	$initial_output_level = Tools_WADF::OUTPUT_NORMAL;
+}
+
+$wadf = new Tools_WADF($appname, null, $wadf_macros, $initial_output_level);
+
+$vc_info['rev_type'] = Tools_WADF::VCREFTYPE_TRUNK;
+$vc_info['rev_translated'] = null;
+if (isset($options[1][1])) {
+	$vc_info = $wadf->processVCVersionString($options[1][1], $rev);
+	if (!is_array($vc_info)) {
+		print "ERROR: $vc_info\n";
+		exit(5);
+	}
+}
+
+
+$deploy_path = $wadf->resolveMacro('deploy_path');
+if (file_exists($deploy_path)) {
+	echo "The directory $deploy_path already exists. Are you SURE you wish to COMPLETELY REMOVE it? (y/n):";
+	$confirm = strtolower(trim(fgets(STDIN)));
+	if ($confirm != 'y') {
+		print "Cancelled.\n";
+		exit(5);
+	}
+}
+
+$db_deploy = false;
+if ($db_deploy_prompt) {
+	echo "Do you want to deploy database(s) if relevant? This will ERASE the existing database(s) (y/n):";
+	$db_deploy = strtolower(trim(fgets(STDIN)));
+
+	if ($db_deploy == 'y') {
+		$db_deploy = true;
+	}
+}
+
+$wadf->deploy($vc_info['rev_type'], $vc_info['rev_translated'], $rev, $db_deploy);

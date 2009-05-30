@@ -1,0 +1,5 @@
+<?php
+
+$db = $DB->connect("@db1_type@://@db1_user@:@db1_pass@@@db1_host@/@db1_name@");
+
+?>

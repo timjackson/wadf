@@ -1,0 +1,6 @@
+#!/usr/bin/php
+<?php
+
+$fp = fopen('/tmp/wadf-cron-test','w');
+fputs($fp, date('D j M Y H:i:s'));
+fclose($fp);

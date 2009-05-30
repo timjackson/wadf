@@ -1,0 +1,224 @@
+#!/usr/bin/php
+<?php
+
+/*
+    Web Application Deployment Framework
+    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of version 3 of the GNU General Public License as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+set_include_path('.:@php_dir@');
+
+require_once 'Tools/WADF.php';
+require_once 'Console/Getopt.php'; // this is from PEAR
+
+set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
+
+// Whether to override deployment path and use current dir.
+// We do this if:
+// a) no app name is supplied on the CLI, *and*
+// b) a .wadf-instance is present
+$current_dir = false;
+
+// What version, if any, to switch to
+$deploy_ver = null;
+
+$con = new Console_Getopt;
+$args = $con->readPHPArgv();
+array_shift($args);
+$options = $con->getopt2($args, 'vV', array('no-kickstart', 'no-db', 'no-deps', 'no-dep-tags'));
+
+$usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
+Options:
+  --no-db         Do not re-deploy database
+  --no-deps       Do not re-process dependencies
+  --no-dep-tags   Do not use a dependency tags file, if it exists
+  --no-kickstart  Do not run kickstart script\n";
+
+if (PEAR::isError($options)) {
+	print $usage_text;
+	exit(1);
+}
+
+$debug = false;
+$kickstart_prompt = true;
+$db_deploy_prompt = true;
+$deploy_deps = true;
+$dependency_tags_enabled = true;
+foreach ($options[0] as $option) {
+	switch ($option[0]) {
+		case 'v':
+			$debug = true;
+			break;
+		case 'V':
+			print Tools_WADF::getAboutText();
+			exit(0);
+			break;
+		case '--no-kickstart':
+			$kickstart_prompt = false;
+			break;
+		case '--no-db':
+			$db_deploy_prompt = false;
+			break;
+		case '--no-deps':
+			$deploy_deps = false;
+			break;
+		case '--no-dep-tags':
+			$dependency_tags_enabled = false;
+			break;
+	}
+}
+
+$instance_file_macros = array();
+
+// options[1] contains the non-option args
+$arg_count = count($options[1]);
+switch ($arg_count) {
+	case 2:
+		$appref = $options[1][0];
+		$deploy_ver = $options[1][1];
+		break;
+	case 1:
+		if (file_exists('.wadf-instance')) {
+			$instance_file_macros = Tools_WADF::readInstanceFile('.wadf-instance');
+			$appref = $instance_file_macros['appref'];
+			$current_dir = true;
+			$deploy_ver = $options[1][0];
+		} else {
+			$appref = $options[1][0];
+		}
+		break;
+	case 0:
+		if (file_exists('.wadf-instance')) {
+			$instance_file_macros = Tools_WADF::readInstanceFile('.wadf-instance');
+			$appref = $instance_file_macros['appref'];
+			$current_dir = true;
+		} else {
+			print $usage_text;
+			exit(1);
+		}
+		break;
+	default:
+		print $usage_text;
+		exit(1);
+}
+
+$macros = null;
+if ($current_dir) {
+	$macros['deploy_path'] = getcwd();
+}
+
+// Handle "profile" specially
+if (isset($instance_file_macros['profile'])) {
+	$macros['profile'] = $instance_file_macros['profile'];
+}
+
+if ($debug) {
+	$initial_output_level = Tools_WADF::OUTPUT_VERBOSE;
+} else {
+	$initial_output_level = Tools_WADF::OUTPUT_NORMAL;
+}
+$wadf = new Tools_WADF($appref,null,$macros,$initial_output_level);
+
+$dir = $wadf->resolveMacro('deploy_path');
+if ($dir == '@deploy_path@') {
+	print "ERROR: resolving deploy_path failed\n";
+	exit(1);
+}
+
+$db_redeploy = false;
+if ($db_deploy_prompt) {
+	$in_use = $wadf->enumerateMultipleEntities();
+	$dbs = array(); 
+	if (isset($in_use['db']) && count($in_use['db']) > 0) {
+		foreach ($in_use['db'] as $num) {
+			$host = $wadf->resolveMacro("db${num}_host");
+			$name = $wadf->resolveMacro("db${num}_name");
+			$type = $wadf->resolveMacro("db${num}_type");
+			$dbs[] = "$type://$host/$name";
+		}
+		print 'This site uses the following ' . count($dbs) . ' database' . (count($dbs) > 1 ? 's' : '') . ":\n\n";
+		print implode("\n", $dbs) . "\n\n";
+		print "Do you want to redeploy these? This will ERASE the existing data.\nErase? (y/n) [default=n]:\n";
+		$db_redeploy_question = strtolower(trim(fgets(STDIN)));
+
+		if ($db_redeploy_question == 'y') {
+			$db_redeploy = true;
+		}
+	}
+}
+
+print "Processing $appref in $dir...\n";
+
+if ($deploy_ver !== null) {
+	$vc_info = $wadf->processVCVersionString($deploy_ver);
+	if (!is_array($vc_info)) {
+		print "ERROR: $vc_info\n";
+		exit(1);
+	}
+	print "Deploying version $deploy_ver...\n";
+	$wadf->checkout($dir, $vc_info['rev_type'], $vc_info['rev_translated']);
+}
+
+$vc_id = $wadf->setVCVersionMacro($dir);
+print "Version of $appref is $vc_id.\n";
+
+$wadf->resolveMacrosWithFallbacksInDir($dir, $db_redeploy);
+$wadf->checkOptionsRequiringInput();
+
+if ($deploy_deps) {
+	$wadf->deployDependencies($dir, $dependency_tags_enabled);
+}
+
+$wadf->processTemplatesInDir($dir);
+$unresolved_macros = $wadf->getUnresolvedMacros();
+$unresolved_deploy_macros = array();
+if (count($unresolved_macros) > 0) {
+	foreach ($unresolved_macros as $unresolved_macro) {
+		if (substr($unresolved_macro['context'], 0, 5) == 'file:') {
+			$unresolved_deploy_macros[] = $unresolved_macro;
+		}
+	}
+	if (count($unresolved_deploy_macros) > 0) {
+		print "WARNING - UNRESOLVED MACROS:\n";
+		foreach ($unresolved_deploy_macros as $unresolved_macro) {
+			print '   ' . $unresolved_macro['context'] . ': @' .  $unresolved_macro['macro'] . "@\n";
+		}
+	}
+}
+
+if ($db_redeploy) {
+	$wadf->deployDatabase();
+}
+$wadf->deployVhost($dir);
+$wadf->deployDNS();
+$wadf->deployScheduledJobs();
+$wadf->postDeploy();
+$wadf->restartWebserver();
+$wadf->cleanupFiles();
+
+if ($kickstart_prompt) {
+	$kickstart = $wadf->resolveMacro('kickstart_script');
+	if ($kickstart && $kickstart != '@kickstart_script@') {
+		if (file_exists($kickstart)) {
+			print wordwrap("Do you want to re-run the kickstart script ($kickstart)? (y/n) [default=n]:");
+
+			$kickstart_question = strtolower(trim(fgets(STDIN)));
+
+			if ($kickstart_question == 'y') {
+				$wadf->runKickstart($db_redeploy);
+			}
+		}
+	}
+}

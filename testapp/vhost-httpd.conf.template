@@ -1,0 +1,10 @@
+<VirtualHost @vhost1_interface@>
+	ServerName @vhost1_name@
+	DocumentRoot @deploy_path@/webroot
+	php_value include_path .:@deploy_path@/include:@php_dir@
+	php_admin_flag engine on
+	php_admin_value open_basedir @deploy_path@/:@php_dir@/
+	php_admin_flag magic_quotes_gpc off
+	RewriteEngine on
+	RewriteRule /foo @deploy_path@/include/handle_url.php
+</VirtualHost>

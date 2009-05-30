@@ -1,0 +1,496 @@
+#######################################################################
+# v0.11.3 (unreleased)
+#######################################################################
+Improvements to error handling and portability; add --no-dep-tags option to
+wadf-reprocess
+
+New features:
+- #203: Add workaround for PEAR bug #13425 (Dep package install fails when 2 
+  vers of dep exist, even when depchain is OK)
+- #201: Allow wadf-undeploy to take "-d opt=value" options
+
+Bugs fixed:
+- #187: wadf-undeploy does not correctly remove databases
+
+Changes/improvements:
+- #175: Deploying a database without a schema.sql fails even if dbX_schema is 
+  empty
+- #177: Add handling of schema import errors
+- #175: Deploying a database without a schema.sql fails even if dbX_schema is
+  empty
+- #195: Add --no-dep-tags option to wadf-reprocess
+- #196: Rewrite template handling to remove dependency on UNIX "find" command
+  (for portability)
+- #198: Improve general error handling
+
+#######################################################################
+# v0.11.2 (11 Feb 2009)
+#######################################################################
+Remove some debugging output that appears when deploying using a dependency
+tags file; it was inadvertently left in. No functional changes.
+
+Bugs fixed:
+- #164: Debugging output present when using dependency tags file
+
+
+#######################################################################
+# v0.11.1 (2 Feb 2009)
+#######################################################################
+Fix a silly bug introduced with some refactoring in 0.11.0, improve the
+performance when deploying PEAR dependencies using dependency tags and make
+undeployment more reliable.
+
+Bugs fixed:
+- #158: E_NOTICES relating to standalone_pear
+- Fix wadf-undeploy so that database details are prompted for if necessary
+
+Changes/improvements:
+- #157: When deploying PEAR dependencies from dependency tags, check if they are
+  already installed before force-installing 
+- #160: wadf-deploy / reprocess should use dependency tags exclusively if they 
+  are defined
+- Improve the output of wadf-deploy to make it clearer which database(s) are
+  going to be removed
+- #161: Improve WADF HTTPD server default output page (list of applications)
+- #162: Remove hardcoded references to system command "rm" (part of a long term
+  goal to improve portability)
+
+
+#######################################################################
+# v0.11.0 (29 Jan 2009)
+#######################################################################
+Add ability to deploy SVN dependencies and make some minor improvements
+to the command line interface.
+
+New features:
+- 151: [Core] Add support for SVN checkouts in dependency tags file
+- 153: [CLI] Add command line option to disable reprocessing of dependencies
+  when running wadf-reprocess
+- 43: [Core] Add macro which generates random numbers
+- 121: [Core] Allow the %% macro to have some additional text for guidance
+- 138: [Core] Allow the ** macro to have some additional text for guidance
+- 136: [CLI] Add command line option to automatically disable database
+  deployment for wadf-deploy and wadf-reprocess
+- 137: [CLI] Add command line option to automatically disable kickstart
+  script running for wadf-reprocess
+- 150: [Core] Allow wadf to clean the cache of pear_local automatically
+
+Changes/improvements:
+- Improve "wadf-httpd status" output
+
+
+#######################################################################
+# v0.10.3 (8 Jan 2009)
+#######################################################################
+Minor improvements to the deployment process and easier to setting up of
+execution of standalone PHP scripts by default.
+
+Changes/improvements to existing functionality:
+- 128: [Core] When prompting for dbX_deploy_pass or dbX_pass, show relevant
+  database information (user, host, dbname)
+- 109: [Core] Add php_bin to default pear_opts_as_macros option
+- 146: [CLI] Don't prompt for re-running of kickstart script if it doesn't exist
+
+#######################################################################
+# v0.10.2 (16 Dec 2008)
+#######################################################################
+This release solves some problems related to database deployment under certain
+circumstances.
+
+Changes/improvements to existing functionality:
+- 126: Improve error handling when deploying databases
+- Warn user if mysql extension is not installed when trying to deploy a database
+
+Bugs fixed:
+- 125: Errors when dropping database tables during deployment
+
+#######################################################################
+# v0.10.1 (11 Dec 2008)
+#######################################################################
+This release adds a number of nice-to-have features for advanced environments
+including:
+- deployment/tagging functionality to support snapshotting of dependencies when 
+  tagging a final release (dependency-tags)
+- allowing kickstart scripts to know whether or not database has been
+  (re)-deployed via DEPLOY_INITDB environment variable
+- ability to deploy a site from the latest tag in version control without
+  specifying it explicitly. ("wadf-deploy mysite tag/LATEST")
+
+See the docs for more.
+
+New features:
+- 111: [Core] Add ability to deploy specific PEAR package versions for tagged 
+  applications
+- 117: [Core] Pass environment variable to kickstart script to show whether or 
+  not database has been deployed
+- 62:  [Core] Ability to deploy the latest release/tag without knowing the
+  specific release number
+- 115: [Core] Add special macro to die when deploying/reprocessing if a value
+  is not present
+
+Changes/improvements to existing functionality:
+- 118: [CLI] Prompt whether to re-run kickstart script with wadf-reprocess
+- Improved documentation
+  
+Bugs fixed:
+- 120: [Core] Permissions not preserved on generated files
+- 123: [CLI] E_NOTICE in wadf-undeploy
+- 122: [CLI] Spurious errors reported with wadf-clean
+- Fix corruption of .wadf-instance file when file already exists on deployment
+
+#######################################################################
+# v0.9.3 (15 Nov 2008)
+#######################################################################
+This release tidies up and fixes some problems relating to deploying sites
+with an instance name different to the appref, i.e.
+"wadf-deploy -d instance=XYZ someapp"
+
+Bugs fixed:
+- 112: When using "wadf-deploy -d instance=foo", the instance file is not
+  correct 
+
+Changes/improvements to existing functionality:
+- Don't allow "-d appref" on the commandline; it doesn't make sense. Normally,
+  "-d instance" is intended instead.
+- Use the instance name by default instead of appref when constructing database
+  details (no effect for most cases, but is more sensible)
+
+#######################################################################
+# v0.9.2 (30 Oct 2008)
+#######################################################################
+This release fixes and improves the handling of profiles, in particular to make
+it possible to switch profiles more easily "on the fly", for example by doing
+"wadf-deploy -d profile=foo". Especially useful if you have more than one
+profile in .wadf/config e.g. work/home or work1/work2. WADF now stores the
+selected profile in the instance file and correctly handles this on subsequent
+reprocesses. It also does this for any other options passed on the command lin
+via the "-d" parameter.
+
+New features:
+- 104: [Core] Enable "profile" storage and processing in the WADF instance file
+- 105: [CLI] Save command line options to the WADF instance file
+
+Bugs fixed:
+- 101: [CLI] Can't select different profile from command line
+- 107: [Core] Schema deploying does not respect db_deploy_user/pass options
+- 106: [Micro HTTP server] wadf-httpd gives error if "wadf-httpd reload" called
+  and stale pid file exists
+
+Changes/improvements to existing functionality:
+- 100: [Micro HTTP server] wadf-httpd: Show apachectl output if syntax test
+  fails
+- 103: [Core] Change cwd to deployed site before running setup.php
+- 102: [Core] Add error handling for database undeploy
+
+#######################################################################
+# v0.9.1 (11 Sep 2008)
+#######################################################################
+This release fixes a problem introduced in 0.9.0 if you use custom file
+roles (e.g. an "applicationcore" one or similar). It solves it by 
+introducing a more generic option (dep_pear_opts_as_macros) which specifies
+which PEAR options will be turned into macros for substitution into
+templates.
+
+New features:
+- 88: [Core] Add option to allow setting of arbitrary PEAR options as macros
+
+Bugs fixed:
+- 89: [CLI] "wadf-deploy" without a parameter gives an E_NOTICE
+- 87: [Core] PHP notices when deploying database
+
+#######################################################################
+# v0.9.0 (9 Sep 2008)
+#######################################################################
+This is an evolutionary rather than revolutionary release which tidies up a lot
+of loose ends and generally makes WADF a bit more user-friendly. In particular,
+WADF tries to tailor its output to focus on the important things. Use the "-v"
+option if you want to get more verbose output (very verbose at the moment; in
+future more fine-grained control will be added).
+
+However, note that files generated from templates will now be marked read-only
+by default. You can control this with the "generated_files_writeable" option.
+
+New features:
+- Features #59/26/83: [CLI] Improve command line output
+- Feature #28: [Core] Add undeploy functionality
+- Feature #70: [Core] Mark files generated from templates as read only
+- Feature #82: [CLI] wadf-reprocess should show the database(s) that will be
+  removed at the prompt
+- Feature #53: [CLI] Add ability to retrieve version from command line
+
+Bugs fixed:
+- Bug #84: [Core] Non-fatal error when setting read-only for template files 
+  removed via post_deploy_cleanup_files
+- Bug #71: [Default] Warning when WADF deploys a clean version of PEAR and
+  dep_pear_base_channel does not have a username
+- Bug #80: [CLI] Command line should not throw errors if invalid options used
+- Bug #76: [Core] WADF inserts bogus comments when php_config_location_extra is
+  empty
+
+Changes/improvements to existing functionality:
+- Issue #81: [CLI] In wadf-list-macros, show the files containing macros
+- Issue #68: [Micro HTTP server] Show systems in alphabetical order in
+  "wadf-httpd status"
+- Issue #79: [Core] Remove forced references to a non-standard "applicationcore" role
+
+#######################################################################
+# v0.8.5 (25 Jun 2008)
+#######################################################################
+Bugs fixed:
+- Bug #67: Warning when deploying crontab if user account has no current crontab
+
+#######################################################################
+# v0.8.4 (25 Jun 2008)
+#######################################################################
+Bugs fixed:
+- Bug #65: WADF attempts to run non-existent kickstart script then fails 
+  with an error
+- Bug #66: wadf-deploy on a tag fails
+
+#######################################################################
+# v0.8.3 (20 Jun 2008)
+#######################################################################
+Bugs fixed:
+- Bug #64: php_config_location_extra is not implemented for CGI deployment
+
+#######################################################################
+# v0.8.2 (17 Jun 2008)
+#######################################################################
+This release fixes a silly bug that meant when deploying using macros that use
+the %% functionality to prompt user entry, the value the user entered was only
+used on the next "wadf-reprocess"
+
+Bugs fixed:
+- Bug #61: First-time deploy/reprocess fails when macros require prompting
+
+Changes/improvements to existing functionality: 
+- Bug #63: Add public method to read version control information from a 
+  directory
+  
+#######################################################################
+# v0.8.1 (12 Jun 2008)
+#######################################################################
+This release fixes a number of significant bugs and adds some important new
+features to assist in live deployment as well as tidying up "workstation"
+deployment somewhat. Please read docs/Upgrading.txt if upgrading from an earlier
+version!
+
+Bugs fixed:
+- Bug #58: wadf-httpd gives error if "wadf-httpd stop" called and stale pid file
+  exists
+- Bug #57: When prompted for multiple macro values on command line, 
+  .wadf-instance file gets corrupted
+- Bug #56: WADF should not prompt for user entry of "fallback" macro values
+- Bug #55: E_NOTICE on Tools/WADF.php line 515
+- Fix E_NOTICE on Tools/WADF.php line 89
+
+New features:
+- Bug #54: Remove requirement to connect to database as root to deploy
+  This is done by the implementation of new options db_deploy_user and
+  db_deploy_pass
+- Bug #51: wadf-httpd no longer has hardcoded references to port 10080 - it will
+  automatically find an available port and start on that
+
+Changes/improvements to existing functionality:
+- Cleans up things better when calling "wadf-httpd stop" 
+- Include macros with fallbacks (e.g. vhost1_name) in "-a" output
+- Add "WADF workstation HOWTO" document (docs/wadf-workstation-howto.txt)
+
+#######################################################################
+# v0.8.0 (3 Jun 2008)
+#######################################################################
+This release adds some important new features to assist in QA and live
+deployment
+
+New features:
+- Implement request #34: Add a "wadf-list-macros" to easily show wadf macros
+- Implement request #44: Add "schema only" option for database deployment
+  (rather than doing CREATE DATABASE, GRANT etc.) - see config option db_deploy
+
+Changes:
+- Now requires PHP5.x
+- Update docs
+
+#######################################################################
+# v0.7.0 (28 Feb 2008)
+#######################################################################
+New features:
+
+- Issue #24: Add ability to pass macros on command line
+- Issue #19: Add option to not install PEAR package docs
+- Issue #27: Drop database before redeploying
+- Issue #21: Prompt the user to enter the ServerAdmin e-mail address when
+  running wadf-httpd for the first time
+- Issue #22: Add ability to append vhost config details on a per-profile basis
+
+Bugs fixed:
+- Issue #32: WADF tries to parse empty lines in php.ini
+
+Changes:
+- Set defaults more sensibly and move workstation-specific stuff into the 
+  default [local] profile
+
+#######################################################################
+# v0.6.5 (22 Feb 2008)
+#######################################################################
+Bugs fixed:
+- Fix bug #16: The .wadf-instance file gets corrupted when deploying with macros
+  including %%
+- Fix E_NOTICE (Undefined variable: options in WADF.php on line 523)
+- Fix problem where source revision was not properly passed through to SVN when 
+  deploying
+- Fix E_NOTICE (Undefined variable: db_deploy_pass in wadf-deploy on line 80)
+
+#######################################################################
+# v0.6.4 (17 Feb 2008)
+#######################################################################
+New features:
+- Add "post_deploy_script" option to (optionally) run a script after deployment 
+  of the site but before restarting the webserver - e.g. to run a privileged 
+  script on a live webserver that moves deployed files (e.g. vhosts) to the 
+  correct place. 
+- Add post_deploy_cleanup_files option, to (optionally) allow cleaning up of
+  "special" files (e.g. those that WADF handles specially like php.ini) after 
+  deployment. By default this is set to clean up @vhost_config_template@,
+  @db_schema@ and @crontab@
+- Bug #15: Filename for the crontab is not a variable and so cannot be
+  overridden for different profiles (it's now a parameter called 'crontab')
+  This also fixes bug #12 - crontab deployment can be disabled by setting the
+  "crontab" option to "none".
+- Bug #17: Clear PEAR download directory after deploy/reprocess
+- Bug #9: Include path should be set/discovered automatically by WADF
+
+Changes:
+- Bug #14: Increase limit on macro name length from 30 to 50 characters
+
+Bugs fixed:
+- Bug #18: php.ini to mod_php processing does not work for parameter names that 
+  include a full stop
+- Bug #11: Warning thrown after deploy/reprocess if webserver_restart_cmd option
+  is empty
+- Correct references in documentation from "site_path" to "deploy_path"
+- Bug #10: Remove deploy-time warning about removing directories if directory 
+  does not already exist
+- Trim the values of config option values in WADF instance files
+- In default config, fix default vhost_name for "staging" profile
+
+Internal:
+- Misc cleanups
+
+#######################################################################
+# v0.6.3 (20 Jan 2008)
+#######################################################################
+Bugs fixed:
+- Several places were still referring to the WADF config file in data_dir
+  instead of the new cfg_dir, which means that fresh installations (or
+  those with the wadf.conf in data_dir removed) fail
+
+#######################################################################
+# v0.6.2 (19 Jan 2008)
+#######################################################################
+New features:
+- Add dep_pear_config_file option
+- Replace old internal confd_dir master option and ~/.wadf/wadf.d
+  config-style with a new more generic option "local_config"
+- Add support for config options in the .wadf-instance file
+- Add support for config options that require user input during 
+  deployment using the '%%' placeholder
+- Generate a "default error page" (and appropriate config) to be used if
+  you hit the WADF HTTP server on an unconfigured interface (thanks
+  to Matt Rosenquist for idea and sample code)
+- Add support for a "#desc" tag in virtual hosts, used in the
+  "wadf-httpd status" output and the default error page
+- Update and improve documentation
+
+
+Internal:
+- Refactor wadf-httpd to extract the logic used for parsing the
+  currently-deployed vhosts and move it into the main Tools_WADF class
+
+Now requires PEAR 1.7.0RC2+ - the new "cfg" role is used to store the
+WADF config file.
+
+#######################################################################
+# v0.6.1 (16 Jan 2008)
+#######################################################################
+Bugs fixed:
+- When deploying a fresh PEAR installation, php_dir is now set to a 
+  subdirectory ('php') of the PEAR install path, rather than splattering the
+  root of the PEAR install path with library files
+- Fix the discovery of the PEAR installation path for existing installations
+- Convert php.ini-style semicolons to hash signs when generating vhost
+  configs (stops generation of invalid Apache configs)
+- Fix bug #4: Error when deploy_dns is set to "none"
+
+New features:
+- Bug #1: Add support for processing scheduled jobs (crontabs)
+- Add ability to get a version control identifier if VC ref is unknown
+  (returns 'unknown' rather than crashing)
+- Automatically create .wadf and .wadf/vhosts for new installations, when
+  first starting a local WADF HTTPD instance
+- Add some documentation into the package
+
+Changes/improvements:
+- Forcibly set application[core]_dir variables when deploying a standalone
+  PEAR, even if they appear to be set already, to be sure
+- Fix the discovery of the PEAR installation path for existing installations
+- When setting PEAR variables to pass through to template macros, explicitly 
+  specify the base channel
+
+#######################################################################
+# v0.6.0 (11 Oct 2007)
+#######################################################################
+- Use ".pearrc" not "pearrc" as config file name when automatically setting up 
+  and installing a PEAR instance 
+- Add 'vc_version' macro to give a unique version identifier that corresponds 
+  with the checked-out deployed copy e.g. "trunk:1234","tag/release-1.2.3:9987",
+  "branch/1.1:4293"
+- Store the latest deployed version number in the vhost file, and show this (if 
+  present) in the 'wadf-httpd status' output
+- Finally support command line options to wadf-deploy to request deployment of 
+  tags or branches
+- Add support for wadf-deploy to request deployment of a specific changeset 
+  (revision)
+- Fix basic bugs with straightforward deployment via wadf-deploy
+- Use "Last Changed Rev" not "Revision" from "svn info" when checking the 
+  version of a deployed app
+- Make note that we ought to check if a deployed instance of the
+  app exists before actually deploying...
+- Add dep on PEAR >= 1.6.2
+- Misc. fixes to base channel handling
+- Make logging into channel automatic (not interactive) now that PEAR 1.6.x is
+  out (thanks to PEAR req #10579)
+- Show the default option (i.e. what happens when you press ENTER) when doing 
+  wadf-reprocess and it asks about deploying a database
+- Add dep on pcre extension
+- Force application_dir to be the deployed path - this should be used in macros 
+  instead of deploy_path
+- Rename vc_version macro to deploy_version
+- Change naming of version tags in deploy_version
+- Improve error reporting if deploy_dns value not known
+- Fix a possible bug when setting the PEAR application* options where WADF might
+  think they are set when they aren't.
+- Add dep_pear_preferred_stability option
+- Make checkout function perform an "svn switch" if a working copy already
+  exists
+- Use "pear upgrade" for installing as this works better with existing 
+  installations
+- Add support for switching versions via "wadf-reprocess [appname] [version]"
+- Refactor version-parsing code to process deploy versions from the command line
+
+
+#######################################################################
+# v0.5.5 (12 Sep 2007)
+#######################################################################
+- Rename the php_config_location_local option to
+  php_config_location_extra, to avoid confusion with the "local" profile,
+  and give an example of using it
+- Remove some non-working options from the sample wadf.conf
+- Add basic handling to warn about unresolved macros when doing
+  wadf-reprocess
+- Add @home@ internal macro - filled with users' home directory
+- Try to discover @hostname@ from the environment variable "HOSTNAME"
+  before falling back on doing a lookup on 127.0.0.1
+- Use ".pearrc" not "pearrc" as config file name when automatically setting
+  up and installing a PEAR instance 
+- Tidy up and remove hardcoded references

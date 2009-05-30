@@ -1,0 +1,23 @@
+Upgrading to v0.9.0+ from any previous version
+----------------------------------------------
+The main thing to note is that a new option "generated_files_writeable" has been
+included and this is set to FALSE by default. Therefore after deployment or 
+reprocessing, files generated from ".template" files will not be writeable. This
+is to make it harder to accidentally lose work.
+
+Upgrading to v0.8.1 from any previous version
+---------------------------------------------
+The use of PEAR 1.7.2 is strongly recommended as this has proper support for
+handling config files and notifies you when it is not overwriting old files and
+thus you need to merge new configs with old configs.
+
+1. Please make sure you use the new wadf.conf in the PEAR cfg_dir (you will need
+   to copy it over the old one or diff with the old one and merge changes)
+
+If you use wadf-httpd:
+
+2. Please *delete* ~/.wadf/httpd.conf before running wadf-httpd for the first 
+   time after upgrade (to remove the hardcoded port 10080 stuff)
+
+3. Search and replace all instances of '*:10080' with '*' in ~/.wadf/vhosts/*" 
+   to remove hardcoded port 10080 references

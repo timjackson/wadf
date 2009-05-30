@@ -1,0 +1,3 @@
+Thanks to all those who have contributed by testing, giving feature ideas,
+bug reports, and code during the development, in particular Matt Rosenquist
+for a number of patches.

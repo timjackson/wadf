@@ -1,0 +1,105 @@
+#!/usr/bin/php
+<?php
+
+/*
+    Web Application Deployment Framework
+    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of version 3 of the GNU General Public License as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+set_include_path('.:@php_dir@');
+
+require_once 'Tools/WADF.php';
+require_once 'Console/Getopt.php'; // this is from PEAR
+
+set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
+
+$con = new Console_Getopt;
+$args = $con->readPHPArgv();
+array_shift($args);
+$options = $con->getopt2($args, 'aV');
+
+$usage_text = "Usage: wadf-list-macros [-a] appref\n";
+
+if (PEAR::isError($options)) {
+	print $usage_text;
+	exit(5);
+}
+
+$all = false;
+foreach ($options[0] as $option) {
+	if ($option[0] == 'a') {
+		$all = true;
+	} else if ($option[0] == 'V') {
+		print Tools_WADF::getAboutText();
+		exit(0);
+	}
+}
+
+$force_macros = array();
+
+if (isset($options[1][0])) {
+	$appref = $options[1][0];
+} else if (file_exists('.wadf-instance')) {
+	$instance_file = file('.wadf-instance');
+	$appref = trim($instance_file[0]);
+	$force_macros['deploy_path'] = getcwd();
+} else {
+	print $usage_text;
+	exit(5);
+}
+
+$wadf = new Tools_WADF($appref, null, $force_macros);
+
+if ($all) {
+	$macros = $wadf->resolveAllMacros();
+}
+
+$dir = $wadf->resolveMacro('deploy_path');
+$macro_list = $wadf->extractMacrosFromDir($dir, true);
+$macro_list[] = 'deploy_path';
+foreach ($macro_list as $macro) {
+	$macros[$macro] = $wadf->resolveMacro($macro);
+}
+
+$ignore_macros = array();
+if (!$all) {
+	$ignore_macros = $wadf->getFallbackMacros();
+}
+$ignore_macros[] = 'db_number';
+$ignore_macros[] = 'vhost_number';
+
+foreach ($macros as $name => $value)
+{
+	if (in_array($name, $ignore_macros)) {
+		unset($macros[$name]);
+	}
+}
+
+ksort($macros);
+
+print "Files containing macros:\n";
+foreach (Tools_WADF::listTemplateFiles($dir) as $file) {
+	print ' - ' . str_replace($dir . '/', '', $file) . "\n";
+}
+
+print "\nMacros defined:\n";
+
+$max_length = 0;
+foreach ($macros as $name => $value) {
+	if (strlen($name) > $max_length) $max_length = strlen($name);
+}
+foreach ($macros as $name => $value){
+	print str_pad($name, $max_length) . ' : ' . $value . "\n";
+}

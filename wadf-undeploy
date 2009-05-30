@@ -1,0 +1,120 @@
+#!/usr/bin/php
+<?php
+
+/*
+    Web Application Deployment Framework
+    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of version 3 of the GNU General Public License as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+set_include_path('.:@php_dir@');
+
+require_once 'Tools/WADF.php';
+require_once 'Console/Getopt.php'; // this is from PEAR
+
+set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
+
+$con = new Console_Getopt;
+$args = $con->readPHPArgv();
+array_shift($args);
+$options = $con->getopt2($args, 'vVd:');
+
+$usage_text = "Usage: wadf-undeploy [appname]\n";
+
+if (PEAR::isError($options)) {
+	print $usage_text;
+	exit(5);
+}
+
+$debug = false;
+$wadf_macros = array();
+// iterate over options
+foreach ($options[0] as $option) {
+	if ($option[0] == 'v') {
+		$debug = true;
+	} else if ($option[0] == 'V') {
+		print Tools_WADF::getAboutText();
+		exit(0);
+	} else if ($option[0] == 'd') {
+		if (preg_match('/^(\S+)=(.+)$/', $option[1], $matches)) {
+			if ($matches[1] == 'appref') {
+				print wordwrap("Passing '-d appref=XYZ' on the command line does not make sense, because the application reference is passed in as a parameter. Depending on what you want to do, you may want to use '-d instance=XYZ' instead.\n");
+				exit(5);
+			}
+			$wadf_macros[$matches[1]] = $matches[2];
+		} else {
+			print "Malformed option '-d " . $option[1] . "'\n";
+			exit(5);
+		}
+	}
+}
+
+if (!isset($options[1][0])) {
+	if (file_exists('.wadf-instance')) {
+		$instance_file = file('.wadf-instance');
+		$appref = trim($instance_file[0]);
+		$wadf_macros['deploy_path'] = getcwd();
+	} else {
+		print $usage_text;
+		exit(5);
+	}
+} else {
+	$appref = $options[1][0];
+}
+
+if ($debug) {
+	$initial_output_level = Tools_WADF::OUTPUT_VERBOSE;
+} else {
+	$initial_output_level = Tools_WADF::OUTPUT_NORMAL;
+}
+$WebDeploy = new Tools_WADF($appref, null, $wadf_macros, $initial_output_level);
+
+$deploy_path = $WebDeploy->resolveMacro('deploy_path');
+if (file_exists($deploy_path)) {
+	echo wordwrap("Are you SURE you wish to COMPLETELY UNDEPLOY the application $appref at $deploy_path? This will remove everything associated with this application including:\n".
+	" - all files on the filesystem\n".
+	" - PEAR installs\n".
+	" - crontab entries\n (y/n):");
+	$confirm = strtolower(trim(fgets(STDIN)));
+	if ($confirm != 'y') {
+		print "Cancelled.\n";
+		exit(5);
+	}
+	$WebDeploy->resolveMacrosWithFallbacksInDir($deploy_path, true);
+}
+
+$db_undeploy = false;
+$in_use = $WebDeploy->enumerateMultipleEntities();
+$dbs = array(); 
+if (isset($in_use['db']) && count($in_use['db']) > 0) {
+	foreach ($in_use['db'] as $num) {
+		$host = $WebDeploy->resolveMacro("db${num}_host");
+		$name = $WebDeploy->resolveMacro("db${num}_name");
+		$type = $WebDeploy->resolveMacro("db${num}_type");
+		$dbs[] = "$type://$host/$name";
+	}
+	print 'This site uses the following ' . (count($dbs) > 1 ? count($dbs) . ' ' : '') . 'database' . (count($dbs) > 1 ? 's' : '') . ":\n\n";
+	print implode("\n", $dbs) . "\n\n";
+	print "Do you want to PERMANENTLY REMOVE " . (count($dbs) > 1 ? 'these' : 'this') . "? (y/n):";
+	$db_undeploy = strtolower(trim(fgets(STDIN)));
+
+	if ($db_undeploy == 'y') {
+		$db_undeploy = true;
+	} else {
+		$db_undeploy = false;
+	}
+}
+
+$WebDeploy->checkOptionsRequiringInput();
+$WebDeploy->undeploy($db_undeploy) or exit(1);
