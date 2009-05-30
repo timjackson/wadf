@@ -1986,20 +1986,24 @@ class Tools_WADF {
 				if (substr($value, 0, 2) == '%%') {
 					$notes = trim(substr($value, 2));
 					$extra_info = '';
+					$key_name = "the value for the config option '$key'"; // what we will show the user
 					if (preg_match('/^db(\d+)_deploy_pass$/', $key, $matches)) {
 						$dbnum = $matches[1];
 						$db_name = $this->resolveMacro("db${dbnum}_name");
 						$db_host = $this->resolveMacro("db${dbnum}_host");
 						$deploy_user = $this->resolveMacro("db${dbnum}_deploy_user");
+						$key_name = 'the database password (for deployment)';
 						$extra_info = "to deploy/undeploy database $db_name on $db_host, as user '$deploy_user'";
 					} else if (preg_match('/^db(\d+)_pass$/', $key, $matches)) {
 						$dbnum = $matches[1];
 						$db_name = $this->resolveMacro("db${dbnum}_name");
 						$db_host = $this->resolveMacro("db${dbnum}_host");
 						$db_user = $this->resolveMacro("db${dbnum}_user");
+						$key_name = 'the database password';
 						$extra_info = "for database $db_name on $db_host, connecting as user '$db_user'";
 					}
-					$msg = "Please enter the value for the config option '$key'";
+					
+					$msg = "Please enter $key_name";
 					if ($extra_info) $msg .= " ($extra_info)";
 					if (!empty($notes)) {
 						$msg .= "\nNotes: $notes\n";
