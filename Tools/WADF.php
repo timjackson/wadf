@@ -310,7 +310,7 @@ class Tools_WADF {
 							$this->_removeDatabaseTables($name, $db);
 						
 							// Deploy new schema
-							$this->_debugOutput("Deploying new schema for database $name as user $db_deploy_user...", self::DEBUG_GENERAL);
+							$this->_debugOutput("\tDeploying new schema for database $name as user $db_deploy_user...", self::DEBUG_GENERAL);
 							$cmd = "mysql $name -h $host -u $db_deploy_user ".(($db_deploy_pass != null) ? "-p$db_deploy_pass" : '')." < $dir/$schema 2>&1";
 						}
 						mysql_close($db);
@@ -392,7 +392,7 @@ class Tools_WADF {
 	
 	protected function _removeDatabaseTables($dbname, $dbconn)
 	{
-		$this->_debugOutput("Deleting existing tables in database $dbname...", self::DEBUG_GENERAL);
+		$this->_debugOutput("\tDeleting existing tables in database $dbname...", self::DEBUG_GENERAL);
 		$res = mysql_select_db($dbname, $dbconn);
 		if ($res === false) {
 			throw new Exception("Could not select database $dbname: " . mysql_error($dbconn));
@@ -403,7 +403,7 @@ class Tools_WADF {
 		}
 		mysql_query('SET FOREIGN_KEY_CHECKS=0');
 		while ($table = mysql_fetch_row($res)) {
-			$this->_debugOutput("\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
+			$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
 			$res2 = mysql_query("DROP TABLE `" . $table[0] . "`", $dbconn);
 			if ($res2 === false) {
 				throw new Exception("Error dropping table $dbname.$table[0] :" . mysql_error($dbconn));
@@ -706,7 +706,7 @@ class Tools_WADF {
 	{
 		$directives_out = array();
 		if (file_exists($file)) {
-			$this->_debugOutput("Processing PHP config file $file...", self::DEBUG_GENERAL);
+			$this->_debugOutput("\tProcessing PHP config file $file...", self::DEBUG_INFORMATION);
 			$php_ini_directives = file($file);
 			$directives_out = array();
 			foreach ($php_ini_directives as $directive) {
@@ -1479,11 +1479,11 @@ class Tools_WADF {
 
 		if ($this->_debug < self::DEBUG_GENERAL) {
 			$output = false;
-			$strip = '/install|upgrade|optional|^\.+done\:|Starting to download|downloading/i';
+			$strip = '/install|upgrade|optional|^\.+done\:|Starting to download|downloading|channel "pear.php.net" has updated its protocols/i';
 		} elseif ($this->_debug < self::DEBUG_INFORMATION) {
-			$strip = '/upgrade failed|optional|^\.+done\:|Starting to download|downloading/i';
+			$strip = '/upgrade failed|optional|^\.+done\:|Starting to download|downloading|channel "pear.php.net" has updated its protocols/i';
 		} elseif ($this->_debug < self::DEBUG_VERBOSE) {
-			$strip = '/^\.+done\:|Starting to download|downloading/i';
+			$strip = '/^\.+done\:|Starting to download|downloading|channel "pear.php.net" has updated its protocols/i';
 		} else {//DEBUG_VERBOSE
 			$strip = false;
 		}
@@ -1506,32 +1506,33 @@ class Tools_WADF {
 				} else if (preg_match('#^Duplicate package (channel://[^/]+/[^-]+)-(.+) found#', $line, $m)) {
 					$duplicate_packages[$m[1]][] = $m[2];
 				} elseif (!$strip || !preg_match($strip, $line)) {
-					echo $line . "\n";
+					$this->_debugOutput("\t" . $line, self::DEBUG_GENERAL);
 				}
 			}
 			
-			if (count($deprecated) > 0 && $this->_debug >= self::DEBUG_INFORMATION) {
-				echo "\n";
+			if (count($deprecated) > 0 && $this->_debug >= self::DEBUG_GENERAL) {
 				foreach($deprecated as $line) {
-					echo 'Deprecated: ' . $line."\n";
+					$this->_debugOutput('Deprecated: ' . $line, self::DEBUG_GENERAL);
 				}
 			}			
 
 			if (count($warnings) > 0 && $this->_debug >= self::DEBUG_WARNING) {
-				echo "\n###### WARNINGS:\n";
+				$this->_debugOutput("###### WARNINGS:", self::DEBUG_WARNING);
 				foreach($warnings as $line) {
-					echo $line . "\n";
+					$this->_debugOutput("\t" . $line, self::DEBUG_WARNING);
 				}
-				echo "###### End of warnings\n";
+				$this->_debugOutput('###### End of warnings', self::DEBUG_WARNING);
 			}
 		}
 		
 		if (count($duplicate_packages) > 0) {
 			foreach ($duplicate_packages as $pkg => $vers) {
 				$vers = $this->_sortVersions($vers);
-				$ver_picked = $vers[0]; // Let's be conservative and pick the OLDEST version that was listed
-				$this->_debugOutput("Multiple PEAR dependencies on a specific version of $pkg (" . implode(', ', $vers) . ")", self::DEBUG_GENERAL);
-				$this->_debugOutput("Force-installing $pkg-$ver_picked", self::DEBUG_GENERAL);
+				// Let's be conservative and pick the OLDEST version that was listed, especially because of PEAR bug #13427
+				// (<max> does not completely exclude dep versions from consideration)
+				$ver_picked = $vers[0];
+				$this->_debugOutput("WARNING: Multiple PEAR dependencies on a specific version of $pkg (" . implode(', ', $vers) . ")", self::DEBUG_WARNING);
+				$this->_debugOutput("Force-installing $pkg-$ver_picked in lieu of PEAR bug #13425", self::DEBUG_WARNING);
 				$this->_runPEAR("install -f $pkg-$ver_picked");
 			}
 			$this->_debugOutput("Re-running PEAR deployment with newly-installed dependencies...", self::DEBUG_GENERAL);
@@ -1540,7 +1541,7 @@ class Tools_WADF {
 		
 		
 		if($fail_on_error && $ret != 0) {
-			echo "\n###### FAILED when installing PEAR dependencies\n";
+			$this->_debugOutput('###### FAILED when installing PEAR dependencies', self::DEBUG_ERROR);
 			exit;
 		}
 		return $ret;
@@ -1805,7 +1806,7 @@ class Tools_WADF {
 		$kickstart_script = $this->resolveMacro('kickstart_script');
 		if (!empty($kickstart_script)) {
 			if (file_exists($kickstart_script)) {
-				$this->_debugOutput("\nRunning kickstart script $kickstart_script...", self::DEBUG_GENERAL);
+				$this->_debugOutput("Running kickstart script $kickstart_script...", self::DEBUG_GENERAL);
 				
 				// This should not really be necessary as the script should be
 				// written to run from anywhere. But just to make things nicer,
@@ -2116,11 +2117,11 @@ class Tools_WADF {
 		// contents of that.
 		if ($override_profile) {
 			$profile = $override_profile;
-			$this->_debugOutput("File $file: Using profile '$profile' from user interface/command line", self::DEBUG_GENERAL);
+			$this->_debugOutput("File $file: Using profile '$profile' from user interface/command line", self::DEBUG_INFORMATION);
 		} else {
 			$profile = $this->resolveMacro('profile');
 			if ($profile == '@profile@') {
-				$this->_debugOutput("Cannot resolve global profile when processing $file", self::DEBUG_GENERAL);
+				$this->_debugOutput("Cannot resolve global profile when processing $file", self::DEBUG_INFORMATION);
 				$profile = null;
 			}
 		}
@@ -2132,7 +2133,7 @@ class Tools_WADF {
 				$profile = $config['globals']['profile'];
 				$this->_debugOutput("File $file: Using profile='$profile' from 'globals' section of config", self::DEBUG_INFORMATION);//TODO
 			} else {
-				$this->_debugOutput("File $file: ignoring as no global profile set", self::DEBUG_GENERAL);
+				$this->_debugOutput("File $file: ignoring as no global profile set", self::DEBUG_INFORMATION);
 			}
 		}
 		
