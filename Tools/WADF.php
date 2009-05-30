@@ -1168,7 +1168,7 @@ class Tools_WADF {
 				if (empty($channel)) throw new Exception('dep_pear_base_channel option is empty');
 				$ret = $this->_runPEAR("channel-info $channel", false, false);
 				if ($ret != 0) {
-					$this->_debugOutput("Discovering PEAR channel $channel...", self::DEBUG_GENERAL);
+					$this->_debugOutput("Discovering PEAR channel $channel and installing base packages...", self::DEBUG_GENERAL);
 					
 					// With PEAR 1.6.x+ the base_channel can include username and
 					// password in the format username:password@channel
@@ -1270,7 +1270,7 @@ class Tools_WADF {
 			if (file_exists("$dir/package.xml")) {
 				$standalone_pear = $this->_setupPEAR($dir);
 		
-				$this->_debugOutput("Installing PEAR dependencies (from package.xml)...", self::DEBUG_GENERAL);
+				$this->_debugOutput("Installing PEAR dependencies...", self::DEBUG_GENERAL);
 				$application_dir = '';
 				if (!$standalone_pear) {
 					// Deploy to the same directory. Is !$standalone_pear really the
@@ -1278,7 +1278,7 @@ class Tools_WADF {
 					$application_dir = '-d application_dir=' . $this->resolveMacro('application_dir');
 				}
 		
-				$this->_runPEAR("$application_dir upgrade --onlyreqdeps -f $dir/package.xml");
+				$this->_runPEAR("$application_dir upgrade --onlyreqdeps -f $dir/package.xml", true, true, true);
 			}
 		}
 		
@@ -1461,7 +1461,7 @@ class Tools_WADF {
 		return $channel;
 	}
 	
-	protected function _runPEAR($cmd, $output=true, $fail_on_error=true)
+	protected function _runPEAR($cmd, $output=true, $fail_on_error=true, $workaround_pear_bugs=false)
 	{
 		$pear_stability = $this->resolveMacro('dep_pear_preferred_stability');
 		if ($pear_stability) {
@@ -1491,31 +1491,37 @@ class Tools_WADF {
 			$output = true;
 		}
 		
-		$duplicate_packages = array();
-		if ($output) {
-			$warnings = array();
-			$deprecated = array();
-			foreach ($exec_output as $line) {
-				$line = trim($line);
-				if (preg_match("/WARNING: (.*)/i", $line, $m) && !strstr($line, 'failed to download') && !strstr($line, 'channel "pear.php.net" has updated its protocols')) {
-					if (preg_match("/deprecated/", $line)) {
-						$deprecated[] = $m[1];
-					} else {
-						$warnings[] = $m[1];
-					}
-				} else if (preg_match('#^Duplicate package (channel://[^/]+/[^-]+)-(.+) found#', $line, $m)) {
-					$duplicate_packages[$m[1]][] = $m[2];
-				} elseif (!$strip || !preg_match($strip, $line)) {
-					$this->_debugOutput("\t" . $line, self::DEBUG_GENERAL);
+		$duplicate_packages = array(); // workaround for PEAR bug #13425
+		$wrongly_upgraded_packages = array(); // workaround for PEAR bug #13427
+		$warnings = array();
+		$deprecated = array();
+		foreach ($exec_output as $line) {
+			unset($m);
+			unset($m2);
+			$line = trim($line);
+			if (preg_match("/WARNING: (.*)/i", $line, $m) && !strstr($line, 'failed to download') && !strstr($line, 'channel "pear.php.net" has updated its protocols')) {
+				if (preg_match("/deprecated/", $line)) {
+					$deprecated[] = $m[1];
+				} else if ($workaround_pear_bugs && preg_match('#^([^/]+/.+) requires package "([^/]+/.+)" \(version <= (.+)\), downloaded version is (.+)$#', $m[1], $m2)) {
+					// channelshortname/App_Name requires package "channelshortname/Other_App" ([version >= a.b.c, ]version <= 1.2.3), downloaded version is 3.4.5
+					$wrongly_upgraded_packages[$m2[2]] = array('installed_ver' => $m2[4], 'downgrade_to_ver' => $m2[3], 'dependent_app' => $m2[1]);
+				} else {
+					$warnings[] = $m[1];
 				}
+			} else if ($workaround_pear_bugs && preg_match('#^Duplicate package (channel://[^/]+/[^-]+)-(.+) found#', $line, $m)) {
+				$duplicate_packages[$m[1]][] = $m[2];
+			} elseif (!$strip || !preg_match($strip, $line)) {
+				if ($output) $this->_debugOutput("\t" . $line, self::DEBUG_GENERAL);
 			}
-			
-			if (count($deprecated) > 0 && $this->_debug >= self::DEBUG_GENERAL) {
+		}
+		
+		if ($output) {
+			if (count($deprecated) > 0 && $this->_debug >= self::DEBUG_INFORMATION) {
 				foreach($deprecated as $line) {
-					$this->_debugOutput('Deprecated: ' . $line, self::DEBUG_GENERAL);
+					$this->_debugOutput('Deprecated: ' . $line, self::DEBUG_INFORMATION);
 				}
 			}			
-
+	
 			if (count($warnings) > 0 && $this->_debug >= self::DEBUG_WARNING) {
 				$this->_debugOutput("###### WARNINGS:", self::DEBUG_WARNING);
 				foreach($warnings as $line) {
@@ -1525,20 +1531,33 @@ class Tools_WADF {
 			}
 		}
 		
-		if (count($duplicate_packages) > 0) {
-			foreach ($duplicate_packages as $pkg => $vers) {
-				$vers = $this->_sortVersions($vers);
-				// Let's be conservative and pick the OLDEST version that was listed, especially because of PEAR bug #13427
-				// (<max> does not completely exclude dep versions from consideration)
-				$ver_picked = $vers[0];
-				$this->_debugOutput("WARNING: Multiple PEAR dependencies on a specific version of $pkg (" . implode(', ', $vers) . ")", self::DEBUG_WARNING);
-				$this->_debugOutput("Force-installing $pkg-$ver_picked in lieu of PEAR bug #13425", self::DEBUG_WARNING);
-				$this->_runPEAR("install -f $pkg-$ver_picked");
+		if ($workaround_pear_bugs) {
+			$re_run_pear = false;
+			// workaround for PEAR bug #13425
+			if (count($duplicate_packages) > 0) {
+				foreach ($duplicate_packages as $pkg => $vers) {
+					$vers = $this->_sortVersions($vers);
+					// Let's be conservative and pick the OLDEST version that was listed, especially because of PEAR bug #13427
+					// (<max> does not completely exclude dep versions from consideration)
+					$ver_picked = $vers[0];
+					$this->_debugOutput("\tWARNING: Multiple PEAR dependencies on a specific version of $pkg (" . implode(', ', $vers) . ") - probable cause is PEAR bug #13425", self::DEBUG_WARNING);
+					$this->_debugOutput("\tForce-installing $pkg-$ver_picked", self::DEBUG_WARNING);
+					$this->_runPEAR("install -f $pkg-$ver_picked", true, true, true);
+				}
+				$this->_debugOutput("\tRe-running PEAR deployment with newly-installed dependencies...", self::DEBUG_GENERAL);
+				$ret = $this->_runPEAR($cmd, $output, $fail_on_error, true);
 			}
-			$this->_debugOutput("Re-running PEAR deployment with newly-installed dependencies...", self::DEBUG_GENERAL);
-			$ret = $this->_runPEAR($cmd, $output, $fail_on_error);
+
+			// workaround for PEAR bug #13427
+			if (count($wrongly_upgraded_packages) > 0) {
+				foreach ($wrongly_upgraded_packages as $pkg => $pkginfo) {
+					$this->_debugOutput("\tWARNING: $pkg-" . $pkginfo['installed_ver'] . ' was installed, but ' . $pkginfo['dependent_app'] . ' requires version <= ' . $pkginfo['downgrade_to_ver'] . ' (possible cause: PEAR bug #13427 or bad dependency chain)', self::DEBUG_WARNING);
+					$this->_debugOutput("\tAttempting to force-install $pkg-" . $pkginfo['downgrade_to_ver'] . ' to compensate', self::DEBUG_WARNING);
+					// Set fail to FALSE as we don't really care
+					$this->_runPEAR("install -f $pkg-" . $pkginfo['downgrade_to_ver'], true, false, true);
+				}
+			}
 		}
-		
 		
 		if($fail_on_error && $ret != 0) {
 			$this->_debugOutput('###### FAILED when installing PEAR dependencies', self::DEBUG_ERROR);
