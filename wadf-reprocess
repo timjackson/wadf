@@ -212,7 +212,7 @@ if ($kickstart_prompt) {
 	$kickstart = $wadf->resolveMacro('kickstart_script');
 	if ($kickstart && $kickstart != '@kickstart_script@') {
 		if (file_exists($kickstart)) {
-			print wordwrap("Do you want to re-run the kickstart script ($kickstart)? (y/n) [default=n]:");
+			Tools_WADF::consoleOutput("Do you want to re-run the kickstart script ($kickstart)? (y/n) [default=n]:", false);
 
 			$kickstart_question = strtolower(trim(fgets(STDIN)));
 

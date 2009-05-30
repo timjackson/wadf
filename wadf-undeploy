@@ -49,7 +49,7 @@ foreach ($options[0] as $option) {
 	} else if ($option[0] == 'd') {
 		if (preg_match('/^(\S+)=(.+)$/', $option[1], $matches)) {
 			if ($matches[1] == 'appref') {
-				print wordwrap("Passing '-d appref=XYZ' on the command line does not make sense, because the application reference is passed in as a parameter. Depending on what you want to do, you may want to use '-d instance=XYZ' instead.\n");
+				Tools_WADF::consoleOutput("Passing '-d appref=XYZ' on the command line does not make sense, because the application reference is passed in as a parameter. Depending on what you want to do, you may want to use '-d instance=XYZ' instead.");
 				exit(5);
 			}
 			$wadf_macros[$matches[1]] = $matches[2];
@@ -82,10 +82,10 @@ $WebDeploy = new Tools_WADF($appref, null, $wadf_macros, $initial_output_level);
 
 $deploy_path = $WebDeploy->resolveMacro('deploy_path');
 if (file_exists($deploy_path)) {
-	echo wordwrap("Are you SURE you wish to COMPLETELY UNDEPLOY the application $appref at $deploy_path? This will remove everything associated with this application including:\n".
+	Tools_WADF::consoleOutput("Are you SURE you wish to COMPLETELY UNDEPLOY the application $appref at $deploy_path? This will remove everything associated with this application including:\n".
 	" - all files on the filesystem\n".
 	" - PEAR installs\n".
-	" - crontab entries\n (y/n):");
+	" - crontab entries\n (y/n):", false);
 	$confirm = strtolower(trim(fgets(STDIN)));
 	if ($confirm != 'y') {
 		print "Cancelled.\n";

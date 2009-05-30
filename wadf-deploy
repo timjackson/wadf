@@ -48,7 +48,7 @@ foreach ($options[0] as $option) {
 	} else if ($option[0] == 'd') {
 		if (preg_match('/^(\S+)=(.+)$/', $option[1], $matches)) {
 			if ($matches[1] == 'appref') {
-				print wordwrap("Passing '-d appref=XYZ' on the command line does not make sense, because the application reference is passed in as a parameter. Depending on what you want to do, you may want to use '-d instance=XYZ' instead.\n");
+				Tools_WADF::consoleOutput("Passing '-d appref=XYZ' on the command line does not make sense, because the application reference is passed in as a parameter. Depending on what you want to do, you may want to use '-d instance=XYZ' instead.");
 				exit(5);
 			}
 			$wadf_macros[$matches[1]] = $matches[2];

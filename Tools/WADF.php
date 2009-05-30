@@ -2393,14 +2393,15 @@ class Tools_WADF {
 		exit(1);
 	}
 	
-	public static function consoleOutput($msg)
+	public static function consoleOutput($msg, $trailing_newline=true)
 	{
 		$console_width = 80;
 		@exec('stty size 2>&1', $out, $ret);
 		if ($ret == 0) {
 			list($rows, $console_width) = explode(' ', $out[0]);
 		}
-		print wordwrap(rtrim($msg), $console_width) . "\n";	
+		print wordwrap(rtrim($msg), $console_width);
+		if ($trailing_newline) print "\n";
 	}
 }
 

@@ -77,7 +77,7 @@ function start()
 	
 	if (!file_exists($conffile)) {
 		// Insert default config
-		print wordwrap("Enter your e-mail address. This will be used as the ServerAdmin for the virtual hosts managed by wadf-httpd.\n");
+		Tools_WADF::consoleOutput("Enter your e-mail address. This will be used as the ServerAdmin for the virtual hosts managed by wadf-httpd.");
 		$email = fgets(STDIN);
 		$config = file_get_contents($source_conffile);
 		$config = str_replace('#WADF-SERVERADMIN#', $email, $config);
@@ -333,7 +333,7 @@ function do_output()
 		print "[ ERROR ]\n";
 	}
 	if (count($out) > 0) {
-		print wordwrap(implode("\n", $out), 80) . "\n";
+		Tools_WADF::consoleOutput(implode("\n", $out), 80);
 	}
 	$out = array();
 	$ret = 0;
