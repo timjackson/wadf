@@ -1523,11 +1523,11 @@ class Tools_WADF {
 			}			
 	
 			if (count($warnings) > 0 && $this->_debug >= self::DEBUG_WARNING) {
-				$this->_debugOutput("###### WARNINGS:", self::DEBUG_WARNING);
+				$this->_debugOutput("\t ###### PEAR WARNINGS FOLLOW:", self::DEBUG_WARNING);
 				foreach($warnings as $line) {
-					$this->_debugOutput("\t" . $line, self::DEBUG_WARNING);
+					$this->_debugOutput("\t\t" . $line, self::DEBUG_WARNING);
 				}
-				$this->_debugOutput('###### End of warnings', self::DEBUG_WARNING);
+				$this->_debugOutput("\t###### END OF PEAR WARNINGS", self::DEBUG_WARNING);
 			}
 		}
 		
@@ -1560,7 +1560,7 @@ class Tools_WADF {
 		}
 		
 		if($fail_on_error && $ret != 0) {
-			$this->_debugOutput('###### FAILED when installing PEAR dependencies', self::DEBUG_ERROR);
+			$this->_debugOutput("\t###### FAILED when installing PEAR dependencies", self::DEBUG_ERROR);
 			exit;
 		}
 		return $ret;
@@ -1841,13 +1841,17 @@ class Tools_WADF {
 					putenv('DEPLOY_INITDB=0');
 				}
 				
+				$this->_debugOutput('----------- OUTPUT BELOW IS FROM KICKSTART SCRIPT, NOT WADF -----------', self::DEBUG_GENERAL);
+				
 				// Run the script
 				passthru($kickstart_script);
 				
+				$this->_debugOutput('------------------- END OF KICKSTART SCRIPT OUTPUT --------------------', self::DEBUG_GENERAL);
+
 				// Change back to the old working directory
 				chdir($cwd);
 			} else {
-				$this->_debugOutput("\nKickstart script $kickstart_script does not exist; nothing to do.", self::DEBUG_GENERAL);
+				$this->_debugOutput("\nKickstart script $kickstart_script does not exist; nothing to do.", self::DEBUG_INFORMATION);
 			}
 		}
 	}
