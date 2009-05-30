@@ -2011,7 +2011,9 @@ class Tools_WADF {
 						$msg .= ": ";
 					}
 					$this->consoleOutput($msg);
+					@exec('stty -echo 2>&1');
 					$input = trim(fgets(STDIN));
+					@exec('stty echo 2>&1');
 					$input_values[$key] = $input;
 					
 					// We do this NOW so that the values can cascade through

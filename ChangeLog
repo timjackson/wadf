@@ -27,6 +27,8 @@ Changes/improvements:
   (for portability)
 - #198: Improve general error handling
 - #204: Make text output and word wrapping respect console size
+- #206: Hide passwords when entered on command line
+
 
 #######################################################################
 # v0.11.2 (11 Feb 2009)
