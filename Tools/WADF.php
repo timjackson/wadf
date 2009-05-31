@@ -1460,7 +1460,7 @@ class Tools_WADF {
 		return $channel;
 	}
 	
-	protected function _runPEAR($cmd, $output=true, $fail_on_error=true, $workaround_pear_bugs=false)
+	protected function _runPEAR($cmd, $output=true, $fail_on_error=true, $request_bug_workarounds=false)
 	{
 		$pear_stability = $this->resolveMacro('dep_pear_preferred_stability');
 		if ($pear_stability) {
@@ -1501,13 +1501,13 @@ class Tools_WADF {
 			if (preg_match("/WARNING: (.*)/i", $line, $m) && !strstr($line, 'failed to download') && !strstr($line, 'channel "pear.php.net" has updated its protocols')) {
 				if (preg_match("/deprecated/", $line)) {
 					$deprecated[] = $m[1];
-				} else if ($workaround_pear_bugs && preg_match('#^([^/]+/.+) requires package "([^/]+/.+)" \(version <= (.+)\), downloaded version is (.+)$#', $m[1], $m2)) {
+				} else if ($request_bug_workarounds && preg_match('#^([^/]+/.+) requires package "([^/]+/.+)" \(version <= (.+)\), downloaded version is (.+)$#', $m[1], $m2)) {
 					// channelshortname/App_Name requires package "channelshortname/Other_App" ([version >= a.b.c, ]version <= 1.2.3), downloaded version is 3.4.5
 					$wrongly_upgraded_packages[$m2[2]] = array('installed_ver' => $m2[4], 'downgrade_to_ver' => $m2[3], 'dependent_app' => $m2[1]);
 				} else {
 					$warnings[] = $m[1];
 				}
-			} else if ($workaround_pear_bugs && preg_match('#^Duplicate package channel://([^/]+/[^-]+)-(.+) found#', $line, $m)) {
+			} else if ($request_bug_workarounds && preg_match('#^Duplicate package channel://([^/]+/[^-]+)-(.+) found#', $line, $m)) {
 				$duplicate_packages[$m[1]][] = $m[2];
 			} elseif (!$strip || !preg_match($strip, $line)) {
 				if ($output) $this->_debugOutput("\t" . $line, self::DEBUG_GENERAL);
@@ -1530,10 +1530,24 @@ class Tools_WADF {
 			}
 		}
 		
-		if ($workaround_pear_bugs) {
+		if ($request_bug_workarounds) {
+			$workarounds = array();
+			$workaround_options = $this->resolveMacro('dep_pear_bug_workarounds');
+			if (!empty($workaround_options) && $workaround_options != '@dep_pear_bug_workarounds@') {
+				$valid_workarounds = array('bug13425','bug13427');
+				$tmp = explode(',', $workaround_options);
+				foreach ($tmp as $opt) {
+					$opt = trim($opt);
+					if (in_array($opt, $valid_workarounds)) {
+						$workarounds[] = $opt;
+					} else {
+						throw new Exception("Invalid value in dep_pear_bug_workarounds: '$opt'");
+					}
+				}
+			}
 			$re_run_pear = false;
 			// workaround for PEAR bug #13425
-			if (count($duplicate_packages) > 0) {
+			if (in_array('bug13425', $workarounds) && count($duplicate_packages) > 0) {
 				foreach ($duplicate_packages as $pkg => $vers) {
 					$vers = $this->_sortVersions($vers);
 					// Let's be conservative and pick the OLDEST version that was listed, especially because of PEAR bug #13427
@@ -1548,7 +1562,7 @@ class Tools_WADF {
 			}
 
 			// workaround for PEAR bug #13427
-			if (count($wrongly_upgraded_packages) > 0) {
+			if (in_array('bug13427', $workarounds) && count($wrongly_upgraded_packages) > 0) {
 				foreach ($wrongly_upgraded_packages as $pkg => $pkginfo) {
 					$this->_debugOutput("\tWARNING: $pkg-" . $pkginfo['installed_ver'] . ' was installed, but ' . $pkginfo['dependent_app'] . ' requires version <= ' . $pkginfo['downgrade_to_ver'] . ' (possible cause: PEAR bug #13427)', self::DEBUG_WARNING);
 					$this->_debugOutput("\tAttempting to force-install $pkg-" . $pkginfo['downgrade_to_ver'] . ' to compensate', self::DEBUG_WARNING);
