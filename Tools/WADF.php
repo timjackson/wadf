@@ -2403,7 +2403,7 @@ class Tools_WADF {
 	// Used by the command line programs
 	public static function cmdlineHandleException(Exception $e)
 	{
-		$this->consoleOutput($e->getMessage());
+		self::consoleOutput($e->getMessage());
 		exit(1);
 	}
 	
