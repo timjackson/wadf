@@ -1550,7 +1550,7 @@ class Tools_WADF {
 			// workaround for PEAR bug #13427
 			if (count($wrongly_upgraded_packages) > 0) {
 				foreach ($wrongly_upgraded_packages as $pkg => $pkginfo) {
-					$this->_debugOutput("\tWARNING: $pkg-" . $pkginfo['installed_ver'] . ' was installed, but ' . $pkginfo['dependent_app'] . ' requires version <= ' . $pkginfo['downgrade_to_ver'] . ' (possible cause: PEAR bug #13427 or bad dependency chain)', self::DEBUG_WARNING);
+					$this->_debugOutput("\tWARNING: $pkg-" . $pkginfo['installed_ver'] . ' was installed, but ' . $pkginfo['dependent_app'] . ' requires version <= ' . $pkginfo['downgrade_to_ver'] . ' (possible cause: PEAR bug #13427)', self::DEBUG_WARNING);
 					$this->_debugOutput("\tAttempting to force-install $pkg-" . $pkginfo['downgrade_to_ver'] . ' to compensate', self::DEBUG_WARNING);
 					// Set fail to FALSE as we don't really care
 					$this->_runPEAR("install -f $pkg-" . $pkginfo['downgrade_to_ver'], true, false, true);
