@@ -1203,6 +1203,20 @@ class Tools_WADF {
 		// If a "dependency tag file" is found, force-install everything in it.
 		$dep_tag_file = $this->resolveMacro('dep_tags_file');
 		if ($dependency_tags_enabled && !empty($dep_tag_file) && $dep_tag_file != '@dep_tags_file@' && file_exists($dep_tag_file)) {
+			// See if we need PEAR for this deployment; if so, force install without dependencies so
+			// that there are no bogus errors about mismatching dependency requirements from the client site package.xml
+			if (file_exists("$dir/package.xml")) {
+				$standalone_pear = $this->_setupPEAR($dir);
+				$this->_debugOutput("Installing client site package.xml for dependency tracking...", self::DEBUG_GENERAL);
+				$application_dir = '';
+				if (!$standalone_pear) {
+					// Deploy to the same directory. Is !$standalone_pear really the
+					// right criteria to use here?
+					$application_dir = '-d application_dir=' . $this->resolveMacro('application_dir');
+				}
+				$this->_runPEAR("$application_dir upgrade --nodeps --force $dir/package.xml", true, true, true);
+			}
+			
 			$this->_debugOutput("Force-installing tagged versions of dependencies from $dep_tag_file...", self::DEBUG_GENERAL);
 			$dep_tags = @file_get_contents($dep_tag_file);
 			if ($dep_tags !== false) {
