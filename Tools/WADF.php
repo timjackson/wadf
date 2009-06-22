@@ -2044,9 +2044,12 @@ class Tools_WADF {
 						$msg .= ": ";
 					}
 					$this->consoleOutput($msg);
-					@exec('stty -echo 2>&1');
+					if (substr($key, -5) == '_pass' || stristr($key, 'password')) {
+						// Looks like we're asking for a password; attempt to suppress console echo
+						@exec('stty -echo 2>&1');
+					}
 					$input = trim(fgets(STDIN));
-					@exec('stty echo 2>&1');
+					@exec('stty echo 2>&1'); // Re-enable console echo
 					$input_values[$key] = $input;
 					
 					// We do this NOW so that the values can cascade through
