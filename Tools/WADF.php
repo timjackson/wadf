@@ -138,7 +138,8 @@ class Tools_WADF {
 		if (isset($_ENV['HOSTNAME'])) {
 			$macros['hostname'] = $_ENV['HOSTNAME'];
 		} else {
-			$macros['hostname'] = gethostbyaddr('127.0.0.1'); // FIXME this can't be the right way of doing it
+			// TODO there is presumably a better way of doing this
+			$macros['hostname'] = gethostbyaddr('127.0.0.1');
 		}
 		$macros['cwd'] = getcwd();
 		if (function_exists('posix_getuid')) {
@@ -761,7 +762,7 @@ class Tools_WADF {
 		return true;
 	}
 	
-	// FIXME abstract
+	// To support additional version control systems the below function would need to be abstracted
 	/**
 	 * Check out something from version control system
 	 * @param string $destdir         The destination to check a working copy out to
@@ -927,13 +928,13 @@ class Tools_WADF {
 		return $vc_id;
 	}
 	
+	// This would need to be abstracted to support more than just SVN as a version control system
 	/**
 	 * Read version control info from deployed copy
 	 * @return Tools_WADF_VCInfo|false
 	 */
 	public static function readVCInfoFromDir($dir)
 	{
-		// FIXME: support more than just SVN
 		$cmd = "svn info $dir 2>/dev/null";
 		exec($cmd, $output);
 		
