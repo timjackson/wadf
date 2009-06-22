@@ -962,9 +962,13 @@ class Tools_WADF {
 			$info->rev_type = Tools_WADF::VCREFTYPE_BRANCH;
 			$info->rev_translated = $matches[1];
 		} else {
-			$this->_debugOutput("Could not work out VC rev type from URL ". $info->url, self::DEBUG_WARNING);
+			// Could not work out VC rev type from URL
+			/*
+			Used to return:
 			$info->rev_type = Tools_WADF::VCREFTYPE_UNKNOWN;
 			$info->rev_translated = 'unknown';
+			*/
+			return false;
 		}
 		
 		// Check for modifications
