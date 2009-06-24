@@ -1269,7 +1269,7 @@ class Tools_WADF {
 							}
 						} else {
 							$this->_debugOutput("Deploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
-							$this->_runSVN("checkout -r $dep->version $dep->name $path");
+							$this->_runSVN("checkout $dep->name@$dep->version $path");
 							if (file_exists("$path/package.xml")) {
 								if (!$pear_setup) {
 									$standalone_pear = $this->_setupPEAR($dir);

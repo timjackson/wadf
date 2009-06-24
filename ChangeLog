@@ -15,6 +15,8 @@ Bugs fixed:
 - #187: wadf-undeploy does not correctly remove databases
 - #207: Reprocess fails if switching to a new tag/branch, and some generated 
   files conflict with newly-added files in version control
+- Problem deploying SVN dependencies from dependency-tags file, where the
+  directory in SVN has been removed since the tagged SVN revision
 
 Changes/improvements:
 - #175: Deploying a database without a schema.sql fails even if dbX_schema is 
