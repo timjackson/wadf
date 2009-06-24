@@ -21,9 +21,9 @@ Bugs fixed:
 Changes/improvements:
 - #175: Deploying a database without a schema.sql fails even if dbX_schema is 
   empty
+- #224: Reprocessing with dependency tags doesn't process the client package
+  leading to possible spurious dependency warnings
 - #177: Add handling of schema import errors
-- #175: Deploying a database without a schema.sql fails even if dbX_schema is
-  empty
 - #195: Add --no-dep-tags option to wadf-reprocess
 - #196: Rewrite template handling to remove dependency on UNIX "find" command
   (for portability)
