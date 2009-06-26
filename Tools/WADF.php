@@ -1249,6 +1249,7 @@ class Tools_WADF {
 						$path = $this->resolveMacro('deploy_path') . DIRECTORY_SEPARATOR . $dep->metadata;
 						if (is_dir($path)) {
 							if (is_dir($path . DIRECTORY_SEPARATOR . '.svn')) {
+								unset($out);
 								exec("svn status $path", $out, $ret);
 								if (count($out) == 0) {
 									$this->_debugOutput("\tDeploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
@@ -1263,6 +1264,7 @@ class Tools_WADF {
 									}
 								} else {
 									$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path is not a clean working copy", self::DEBUG_ERROR);
+									$this->_debugOutput("\tSVN status output was:\n" . implode("\n", $out), self::DEBUG_INFORMATION);
 								}
 							} else {
 								$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path already exists but is not a working copy", self::DEBUG_ERROR);
