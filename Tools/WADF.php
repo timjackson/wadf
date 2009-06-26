@@ -1541,7 +1541,7 @@ class Tools_WADF {
 			}			
 	
 			if (count($warnings) > 0 && $this->_debug >= self::DEBUG_WARNING) {
-				$this->_debugOutput("\t ###### PEAR WARNINGS FOLLOW:", self::DEBUG_WARNING);
+				$this->_debugOutput("\t###### PEAR WARNINGS FOLLOW:", self::DEBUG_WARNING);
 				foreach($warnings as $line) {
 					$this->_debugOutput("\t\t" . $line, self::DEBUG_WARNING);
 				}
