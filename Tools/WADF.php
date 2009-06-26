@@ -1238,10 +1238,10 @@ class Tools_WADF {
 						// dep->name includes the channel name
 						$pkg_to_install = $dep->name . '-' . $dep->version;
 						if (!in_array($pkg_to_install, $pkgs)) {
-							$this->_debugOutput("Installing $pkg_to_install", self::DEBUG_INFORMATION);
+							$this->_debugOutput("\tInstalling $pkg_to_install", self::DEBUG_INFORMATION);
 							$this->_runPEAR('install -f -n ' . $pkg_to_install);
 						} else {
-							$this->_debugOutput("Skipping installation of $pkg_to_install; already installed", self::DEBUG_INFORMATION);
+							$this->_debugOutput("\tSkipping installation of $pkg_to_install; already installed", self::DEBUG_INFORMATION);
 						}
 					} else if ($dep->type == Tools_WADF_Dependency::TYPE_SVN) {
 						// dep->name is the SVN path to check out
@@ -1251,7 +1251,7 @@ class Tools_WADF {
 							if (is_dir($path . DIRECTORY_SEPARATOR . '.svn')) {
 								exec("svn status $path", $out, $ret);
 								if (count($out) == 0) {
-									$this->_debugOutput("Deploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
+									$this->_debugOutput("\tDeploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
 									unset($out);
 									$this->_runSVN("switch -r $dep->version $dep->name $path");
 									if (file_exists("$path/package.xml")) {
@@ -1262,13 +1262,13 @@ class Tools_WADF {
 										$this->_runPEAR("install -f $path/package.xml");
 									}
 								} else {
-									$this->_debugOutput("Cannot deploy SVN dependency $dep->name; $path is not a clean working copy", self::DEBUG_ERROR);
+									$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path is not a clean working copy", self::DEBUG_ERROR);
 								}
 							} else {
-								$this->_debugOutput("Cannot deploy SVN dependency $dep->name; $path already exists but is not a working copy", self::DEBUG_ERROR);
+								$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path already exists but is not a working copy", self::DEBUG_ERROR);
 							}
 						} else {
-							$this->_debugOutput("Deploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
+							$this->_debugOutput("\tDeploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
 							$this->_runSVN("checkout $dep->name@$dep->version $path");
 							if (file_exists("$path/package.xml")) {
 								if (!$pear_setup) {
