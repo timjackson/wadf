@@ -17,6 +17,8 @@ Bugs fixed:
   files conflict with newly-added files in version control
 - Problem deploying SVN dependencies from dependency-tags file, where the
   directory in SVN has been removed since the tagged SVN revision
+- #227: Deploying SVN dependencies using dependency tags sometimes fails due to
+  interaction between directories
 
 Changes/improvements:
 - #175: Deploying a database without a schema.sql fails even if dbX_schema is 
