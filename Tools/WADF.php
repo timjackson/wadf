@@ -1160,39 +1160,55 @@ class Tools_WADF {
 				$this->_runPEAR($cmd);
 				$this->_runPEAR("channel-update pear", false, false);
 			}
-			
-			$base_channel = $this->resolveMacro('dep_pear_base_channel');
-			if (!empty($base_channel)) {
-				if (preg_match('/^(.+):(.+)@(.+)$/',$base_channel, $matches)) {
-					$username = $matches[1];
-					$channel = $matches[3];
-				} else {
-					$channel = $base_channel;
-				}
-				if (empty($channel)) throw new Exception('dep_pear_base_channel option is empty');
-				$ret = $this->_runPEAR("channel-info $channel", false, false);
-				if ($ret != 0) {
-					$this->_debugOutput("Discovering PEAR channel $channel and installing base packages...", self::DEBUG_GENERAL);
-					
-					// With PEAR 1.6.x+ the base_channel can include username and
-					// password in the format username:password@channel
-					$this->_runPEAR("channel-discover $base_channel", false, false);
-					$this->_runPEAR("channel-update $channel", false, false);
-					if (isset($username)) {
-						$this->_debugOutput("Logged into PEAR channel $channel as user $username", self::DEBUG_INFORMATION);
-					}
-				}
-			}
 		} else {
 			$this->_runPEAR($this->_getPEARCmd() . ' config-get bin_dir', $output);
 			$pear_path = $output[0];
 			$this->_debugOutput("Using existing PEAR installation in $pear_path", self::DEBUG_INFORMATION);
 		}
-		
+
+		$this->_configurePEARBaseChannel();		
 		$this->_installPEARBaseRoles();
 		$this->_configurePEARBaseRoles($pear_path, $dir, $standalone_pear);
 	
 		return $standalone_pear;
+	}
+	
+	/**
+	 * Configure the base channel that may be used when installing PEAR dependencies
+	 * 
+	 * @return void
+	 */
+	protected function _configurePEARBaseChannel()
+	{
+		$base_channel = $this->resolveMacro('dep_pear_base_channel');
+		if (!empty($base_channel)) {
+			if (preg_match('/^(.+):(.+)@(.+)$/',$base_channel, $matches)) {
+				$username = $matches[1];
+				$channel = $matches[3];
+			} else {
+				$channel = $base_channel;
+			}
+			if (empty($channel)) throw new Exception('dep_pear_base_channel option is empty');
+			$ret = $this->_runPEAR("channel-info $channel", false, false);
+			if ($ret != 0) {
+				$this->_debugOutput("Discovering PEAR channel $channel...", self::DEBUG_GENERAL);
+				
+				// With PEAR 1.6.x+ the base_channel can include username and
+				// password in the format username:password@channel
+				$this->_runPEAR("channel-discover $base_channel", false, false);
+				$this->_runPEAR("channel-update $channel", false, false);
+				if (isset($username)) {
+					$this->_debugOutput("Logged into PEAR channel $channel as user $username", self::DEBUG_INFORMATION);
+				}
+			} else {
+				$logout_channel = $this->resolveMacro('dep_pear_base_channel_logout_after_deploy');
+				if ($logout_channel == '1') {
+					// If this option is set, we assume that a channel login is required
+					$pearcmd = $this->_getPEARCmd();
+					passthru("$pearcmd login $channel");
+				}
+			}
+		}
 	}
 	
 	/**
@@ -1212,6 +1228,7 @@ class Tools_WADF {
 			// that there are no bogus errors about mismatching dependency requirements from the client site package.xml
 			if (file_exists("$dir/package.xml")) {
 				$standalone_pear = $this->_setupPEAR($dir);
+				$pear_setup = true;
 				$this->_debugOutput("Installing client site package.xml for dependency tracking...", self::DEBUG_GENERAL);
 				$application_dir = '';
 				if (!$standalone_pear) {
@@ -1698,6 +1715,27 @@ class Tools_WADF {
 			$this->_debugOutput("Clearing PEAR cache...", self::DEBUG_INFORMATION);
 			exec("$pearcmd clear-cache");
 		}
+		
+		// Log out of the PEAR base channel if relevant
+		$logout_channel = $this->resolveMacro('dep_pear_base_channel_logout_after_deploy');
+		if ($logout_channel == '1') {
+			$base_channel = $this->resolveMacro('dep_pear_base_channel');
+			if (!empty($base_channel)) {
+				if (preg_match('/^(.+):(.+)@(.+)$/',$base_channel, $matches)) {
+					$username = $matches[1];
+					$channel = $matches[3];
+				} else {
+					$channel = $base_channel;
+				}
+				$this->_debugOutput("Logging out of PEAR channel $channel...", self::DEBUG_INFORMATION);
+				$pearcmd = $this->_getPEARCmd();
+				// The below is extremely clumsy due to PEAR bug #16387
+				exec("$pearcmd config-get default_channel", $out, $ret);
+				$default_channel = $out[0];
+				$this->_runPEAR("-d default_channel=$channel logout");
+				$this->_runPEAR("config-set default_channel $default_channel", false);
+			}
+		} 
 	}
 	
 	/**

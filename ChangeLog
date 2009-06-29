@@ -10,6 +10,8 @@ New features:
 - #201: Allow wadf-undeploy to take "-d opt=value" options
 - #205: Add workaround for PEAR bug #13427 (<max> does not completely exclude 
   dep versions from consideration) when installing deps
+- #223: Add ability to clear cached PEAR channel passwords after deployment 
+  (see 'dep_pear_base_channel_logout_after_deploy' option)
 
 Bugs fixed:
 - #187: wadf-undeploy does not correctly remove databases
