@@ -12,6 +12,8 @@ New features:
   dep versions from consideration) when installing deps
 - #223: Add ability to clear cached PEAR channel passwords after deployment 
   (see 'dep_pear_base_channel_logout_after_deploy' option)
+- #229: Add new --templates-only option (implies --no-deps --no-db
+  --no-kickstart)
 
 Bugs fixed:
 - #187: wadf-undeploy does not correctly remove databases

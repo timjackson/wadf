@@ -37,14 +37,15 @@ $deploy_ver = null;
 $con = new Console_Getopt;
 $args = $con->readPHPArgv();
 array_shift($args);
-$options = $con->getopt2($args, 'vV', array('no-kickstart', 'no-db', 'no-deps', 'no-dep-tags'));
+$options = $con->getopt2($args, 'vV', array('no-kickstart', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
 Options:
-  --no-db         Do not re-deploy database
-  --no-deps       Do not re-process dependencies
-  --no-dep-tags   Do not use a dependency tags file, if it exists
-  --no-kickstart  Do not run kickstart script\n";
+  --no-db           Do not re-deploy database
+  --no-deps         Do not re-process dependencies
+  --no-dep-tags     Do not use a dependency tags file, if it exists
+  --no-kickstart    Do not run kickstart script
+  --templates-only  Only process templated files (implies --no-db, --no-deps, --no-kickstart)\n";
 
 if (PEAR::isError($options)) {
 	print $usage_text;
@@ -76,6 +77,11 @@ foreach ($options[0] as $option) {
 			break;
 		case '--no-dep-tags':
 			$dependency_tags_enabled = false;
+			break;
+		case '--templates-only':
+			$kickstart_prompt = false;
+			$db_deploy_prompt = false;
+			$deploy_deps = false;
 			break;
 	}
 }
