@@ -1767,7 +1767,32 @@ class Tools_WADF {
 	public function processTemplatesInDir($dir)
 	{
 		$files = $this->listTemplateFiles($dir);
+		$exclude_paths_macro = $this->resolveMacro('template_exclude_paths');
+		$exclude_paths = array();
+		if (!empty($exclude_paths_macro) && !$exclude_paths_macro != '@template_exclude_paths@') {
+			$exclude_paths_tmp = explode(',', $exclude_paths_macro);
+			foreach ($exclude_paths_tmp as $path) {
+				$exclude_paths[] = trim($path);
+			}
+			unset($exclude_paths_tmp);
+		}
+		$files_filtered = array();
 		foreach ($files as $file) {
+			$files_filtered[$file] = $file;
+			// Check if file is excluded
+			$file_relative = substr($file, strlen($dir)+1);
+			foreach ($exclude_paths as $exclude_path) {
+				$test_file_path = substr($file_relative, 0, strlen($exclude_path));
+				if ($test_file_path == $exclude_path) {
+					// File matches exclude pattern; skip
+					unset($files_filtered[$file]);
+					$this->_debugOutput("Excluding file $file from templating (matches excluded path '$exclude_path')", self::DEBUG_INFORMATION);
+					continue 2;
+				}
+			}
+		}
+		foreach ($files_filtered as $file) {
+			// Process template file
 			$content = file_get_contents($file);
 			$content = $this->resolveString($content, null, "file:$file");
 			$output_file = preg_replace('/^(.+)\.template$/','\1',$file);

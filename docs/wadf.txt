@@ -2,7 +2,7 @@
 WADF - Web Application Deployment Framework
 (c)2006-2009 Tim Jackson (tim@timj.co.uk)
 
-User Guide for WADF 0.12.0
+User Guide for WADF 0.12.1
 =========================================================
 
 Introduction
@@ -106,6 +106,8 @@ Key "core" macros/configuration options of interest are:
 If the deployed site uses PEAR (see later), additional macros based on PEAR configuration parameters will also be available, dependent on the value of the option dep_pear_opts_as_macros. For example, the path to libraries installed via PEAR is normally contained in the option "php_dir".
 
 Files within the site (including the vhost.conf and any source files e.g. PHP) should not reference any absolute paths except via macros.
+
+If you want to exclude certain paths from template processing (e.g. temporary checkouts from a version control system), see the 'template_exclude_paths' option.
 
 
 Webserver configuration
