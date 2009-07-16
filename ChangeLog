@@ -5,6 +5,7 @@
 New features:
 - #230: Add option to exclude certain paths from template processing
 - #232: Add --db-only option to wadf-reprocess
+- #234: wadf-reprocess: PEAR-install local copies of PEAR packages 
 
 #######################################################################
 # v0.12.0 (6 July 2009)
