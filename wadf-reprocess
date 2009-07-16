@@ -40,7 +40,11 @@ array_shift($args);
 $options = $con->getopt2($args, 'vV', array('no-kickstart', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
-Options:
+General options:
+  -v                Enable debugging output
+  -V                Show WADF version, licensing information and then exit
+
+Options to modify what the reprocessing does:
   --no-db           Do not re-deploy database
   --no-deps         Do not re-process dependencies
   --no-dep-tags     Do not use a dependency tags file, if it exists
