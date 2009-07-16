@@ -37,7 +37,7 @@ $deploy_ver = null;
 $con = new Console_Getopt;
 $args = $con->readPHPArgv();
 array_shift($args);
-$options = $con->getopt2($args, 'vV', array('no-kickstart', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
+$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
 General options:
@@ -45,6 +45,7 @@ General options:
   -V                Show WADF version, licensing information and then exit
 
 Options to modify what the reprocessing does:
+  --db-only         Just redeploy the database, don't do anything else
   --no-db           Do not re-deploy database
   --no-deps         Do not re-process dependencies
   --no-dep-tags     Do not use a dependency tags file, if it exists
@@ -61,6 +62,7 @@ $kickstart_prompt = true;
 $db_deploy_prompt = true;
 $deploy_deps = true;
 $dependency_tags_enabled = true;
+$template_processing = true;
 foreach ($options[0] as $option) {
 	switch ($option[0]) {
 		case 'v':
@@ -69,6 +71,10 @@ foreach ($options[0] as $option) {
 		case 'V':
 			print Tools_WADF::getAboutText();
 			exit(0);
+			break;
+		case '--db-only':
+			$deploy_deps = false;
+			$template_processing = false;
 			break;
 		case '--no-kickstart':
 			$kickstart_prompt = false;
@@ -191,19 +197,21 @@ if ($deploy_deps) {
 	$wadf->deployDependencies($dir, $dependency_tags_enabled);
 }
 
-$wadf->processTemplatesInDir($dir);
-$unresolved_macros = $wadf->getUnresolvedMacros();
-$unresolved_deploy_macros = array();
-if (count($unresolved_macros) > 0) {
-	foreach ($unresolved_macros as $unresolved_macro) {
-		if (substr($unresolved_macro['context'], 0, 5) == 'file:') {
-			$unresolved_deploy_macros[] = $unresolved_macro;
+if ($template_processing) {
+	$wadf->processTemplatesInDir($dir);
+	$unresolved_macros = $wadf->getUnresolvedMacros();
+	$unresolved_deploy_macros = array();
+	if (count($unresolved_macros) > 0) {
+		foreach ($unresolved_macros as $unresolved_macro) {
+			if (substr($unresolved_macro['context'], 0, 5) == 'file:') {
+				$unresolved_deploy_macros[] = $unresolved_macro;
+			}
 		}
-	}
-	if (count($unresolved_deploy_macros) > 0) {
-		print "WARNING - UNRESOLVED MACROS:\n";
-		foreach ($unresolved_deploy_macros as $unresolved_macro) {
-			print '   ' . $unresolved_macro['context'] . ': @' .  $unresolved_macro['macro'] . "@\n";
+		if (count($unresolved_deploy_macros) > 0) {
+			print "WARNING - UNRESOLVED MACROS:\n";
+			foreach ($unresolved_deploy_macros as $unresolved_macro) {
+				print '   ' . $unresolved_macro['context'] . ': @' .  $unresolved_macro['macro'] . "@\n";
+			}
 		}
 	}
 }
@@ -211,12 +219,14 @@ if (count($unresolved_macros) > 0) {
 if ($db_redeploy) {
 	$wadf->deployDatabase();
 }
-$wadf->deployVhost($dir);
-$wadf->deployDNS();
-$wadf->deployScheduledJobs();
-$wadf->postDeploy();
-$wadf->restartWebserver();
-$wadf->cleanupFiles();
+if ($template_processing) {
+	$wadf->deployVhost($dir);
+	$wadf->deployDNS();
+	$wadf->deployScheduledJobs();
+	$wadf->postDeploy();
+	$wadf->restartWebserver();
+	$wadf->cleanupFiles();
+}
 
 if ($kickstart_prompt) {
 	$kickstart = $wadf->resolveMacro('kickstart_script');
