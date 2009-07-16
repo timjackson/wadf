@@ -1221,6 +1221,28 @@ class Tools_WADF {
 		$pear_setup = false;
 		$standalone_pear = false;
 		
+		// Check for local PEAR packages
+		$local_pear_package_dirs = $this->resolveMacro('dep_pear_local_package_dirs');
+		if ($local_pear_package_dirs && !$local_pear_package_dirs != '@dep_pear_local_package_dirs@') {
+			$package_dirs = explode(',', $local_pear_package_dirs);
+			foreach ($package_dirs as $package_dir) {
+				$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($dir);
+				$this->_debugOutput("Looking for local PEAR packages in $dir_to_check...", self::DEBUG_INFORMATION);
+				$files = self::listAllFiles($dir);
+				foreach ($files as $file) {
+					$basename = basename($file);
+					if ($basename == 'package.xml' || $basename == 'package2.xml') {
+						if (!$pear_setup) {
+							$standalone_pear = $this->_setupPEAR($dir);
+							$pear_setup = true;
+						}
+						$this->_debugOutput("Installing local PEAR package $file...", self::DEBUG_GENERAL);
+						$this->_runPEAR("upgrade --onlyreqdeps -f $file", true, true, true);
+					}
+				}
+			}
+		}
+		
 		// If a "dependency tag file" is found, force-install everything in it.
 		$dep_tag_file = $this->resolveMacro('dep_tags_file');
 		if ($dependency_tags_enabled && !empty($dep_tag_file) && $dep_tag_file != '@dep_tags_file@' && file_exists($dep_tag_file)) {
@@ -1863,6 +1885,23 @@ class Tools_WADF {
 		}
 		
 		return array_unique($macros);
+	}
+	
+	public static function listAllFiles($dir)
+	{
+		$files = array();
+		if (!file_exists($dir) || !is_dir($dir)) return $files;
+		$dh = dir($dir);
+		while ($file = $dh->read()) {
+			if ($file == '..' || $file == '.' || $file == '.svn' || $file == 'CVS') continue;
+			$file = $dir . DIRECTORY_SEPARATOR . $file; // make into an absolute path
+			if (is_file($file)) {
+				$files[] = $file;
+			} else if (is_dir($file)) {
+				$files = array_merge($files, self::listAllFiles($file));
+			}
+		}
+		return $files;
 	}
 	
 	public static function listTemplateFiles($dir)
