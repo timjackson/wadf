@@ -1226,6 +1226,7 @@ class Tools_WADF {
 		
 		$local_pear_packages_to_install = array();
 		$pear_deps_to_force_install = array();
+		$install_pear_deps_from_packagexml = false;
 
 		// If a "dependency tag file" is found, force-install everything in it.
 		$dep_tag_file = $this->resolveMacro('dep_tags_file');
@@ -1283,11 +1284,8 @@ class Tools_WADF {
 							$this->_debugOutput("\tDeploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
 							$this->_runSVN("checkout $dep->name@$dep->version $path");
 							if (file_exists("$path/package.xml")) {
-								if (!$pear_setup) {
-									$standalone_pear = $this->_setupPEAR($dir);
-									$pear_setup = true;
-								}
-								$this->_runPEAR("install -f $path/package.xml");
+								$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
+								$local_pear_packages_to_install[] = "$path/package.xml";
 							}
 						}
 					}
@@ -1298,18 +1296,7 @@ class Tools_WADF {
 		} else {
 			// See if we need PEAR for this deployment
 			if (file_exists("$dir/package.xml")) {
-				$standalone_pear = $this->_setupPEAR($dir);
-				$pear_setup = true;
-		
-				$this->_debugOutput("Installing PEAR dependencies...", self::DEBUG_GENERAL);
-				$application_dir = '';
-				if (!$standalone_pear) {
-					// Deploy to the same directory. Is !$standalone_pear really the
-					// right criteria to use here?
-					$application_dir = '-d application_dir=' . $this->resolveMacro('application_dir');
-				}
-		
-				$this->_runPEAR("$application_dir upgrade --onlyreqdeps -f $dir/package.xml", true, true, true);
+				$install_pear_deps_from_packagexml = true;
 			}
 		}
 		
@@ -1336,7 +1323,7 @@ class Tools_WADF {
 		}
 		
 		// Set up a PEAR installation if we need it and it hasn't already been set up
-		if (count($pear_deps_to_force_install) > 0 || count($local_pear_packages_to_install) > 0) {
+		if ($install_pear_deps_from_packagexml || count($pear_deps_to_force_install) > 0 || count($local_pear_packages_to_install) > 0) {
 			if (!$pear_setup) {
 				$standalone_pear = $this->_setupPEAR($dir);
 				$pear_setup = true;
@@ -1371,6 +1358,19 @@ class Tools_WADF {
 				$this->_debugOutput("Force-installing $list_of_deps", self::DEBUG_INFORMATION);
 				$this->_runPEAR('install --force --nodeps ' . $list_of_deps, true, false, false);
 			}
+		}
+		
+		// Install the client site package.xml to pull in the PEAR dependencies
+		// if dep tags are not in use
+		if ($install_pear_deps_from_packagexml) {
+			$this->_debugOutput("Installing PEAR dependencies...", self::DEBUG_GENERAL);
+			$application_dir = '';
+			if (!$standalone_pear) {
+				// Deploy to the same directory. Is !$standalone_pear really the
+				// right criteria to use here?
+				$application_dir = '-d application_dir=' . $this->resolveMacro('application_dir');
+			}
+			$this->_runPEAR("$application_dir upgrade --onlyreqdeps -f $dir/package.xml", true, true, true);
 		}
 		
 		$this->_cleanupPEAR($standalone_pear);
