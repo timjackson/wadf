@@ -1221,28 +1221,12 @@ class Tools_WADF {
 		$pear_setup = false;
 		$standalone_pear = false;
 		
-		// Check for local PEAR packages
-		$local_pear_package_dirs = $this->resolveMacro('dep_pear_local_package_dirs');
-		if ($local_pear_package_dirs && !$local_pear_package_dirs != '@dep_pear_local_package_dirs@') {
-			$package_dirs = explode(',', $local_pear_package_dirs);
-			foreach ($package_dirs as $package_dir) {
-				$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($package_dir);
-				$this->_debugOutput("Looking for local PEAR packages in $dir_to_check...", self::DEBUG_INFORMATION);
-				$files = self::listAllFiles($dir);
-				foreach ($files as $file) {
-					$basename = basename($file);
-					if ($basename == 'package.xml' || $basename == 'package2.xml') {
-						if (!$pear_setup) {
-							$standalone_pear = $this->_setupPEAR($dir);
-							$pear_setup = true;
-						}
-						$this->_debugOutput("Installing local PEAR package $file...", self::DEBUG_GENERAL);
-						$this->_runPEAR("upgrade --onlyreqdeps -f $file", true, true, true);
-					}
-				}
-			}
-		}
+		// need to update SVN first
+		// BUT need to install later
 		
+		$local_pear_packages_to_install = array();
+		$pear_deps_to_force_install = array();
+
 		// If a "dependency tag file" is found, force-install everything in it.
 		$dep_tag_file = $this->resolveMacro('dep_tags_file');
 		if ($dependency_tags_enabled && !empty($dep_tag_file) && $dep_tag_file != '@dep_tags_file@' && file_exists($dep_tag_file)) {
@@ -1251,14 +1235,14 @@ class Tools_WADF {
 			if (file_exists("$dir/package.xml")) {
 				$standalone_pear = $this->_setupPEAR($dir);
 				$pear_setup = true;
-				$this->_debugOutput("Installing client site package.xml for dependency tracking...", self::DEBUG_GENERAL);
+				$this->_debugOutput("Installing site package.xml for dependency tracking...", self::DEBUG_GENERAL);
 				$application_dir = '';
 				if (!$standalone_pear) {
 					// Deploy to the same directory. Is !$standalone_pear really the
 					// right criteria to use here?
 					$application_dir = '-d application_dir=' . $this->resolveMacro('application_dir');
 				}
-				$this->_runPEAR("$application_dir upgrade --nodeps --force $dir/package.xml", true, true, true);
+				$this->_runPEAR("$application_dir upgrade --nodeps --force $dir/package.xml", false, true, false);
 			}
 			
 			$this->_debugOutput("Force-installing tagged versions of dependencies from $dep_tag_file...", self::DEBUG_GENERAL);
@@ -1267,25 +1251,15 @@ class Tools_WADF {
 				$deps = $this->processDepTagFile($dep_tags);
 				foreach ($deps as $dep) {
 					if ($dep->type == Tools_WADF_Dependency::TYPE_PEAR) {
-						if (!$pear_setup) {
-							$standalone_pear = $this->_setupPEAR($dir);
-							$pear_setup = true;
-						}
-						// we do this on every iteration in case a previous install has
-						// changed the list
-						$pkgs = $this->_getInstalledPearPackages();
-						// dep->name includes the channel name
-						$pkg_to_install = $dep->name . '-' . $dep->version;
-						if (!in_array($pkg_to_install, $pkgs)) {
-							$this->_debugOutput("\tInstalling $pkg_to_install", self::DEBUG_INFORMATION);
-							$this->_runPEAR('install -f -n ' . $pkg_to_install);
-						} else {
-							$this->_debugOutput("\tSkipping installation of $pkg_to_install; already installed", self::DEBUG_INFORMATION);
-						}
+						$pear_deps_to_force_install[] = $dep->name . '-' . $dep->version;
 					} else if ($dep->type == Tools_WADF_Dependency::TYPE_SVN) {
 						// dep->name is the SVN path to check out
 						// dep->metadata contains relative path
 						$path = $this->resolveMacro('deploy_path') . DIRECTORY_SEPARATOR . $dep->metadata;
+						// trim trailing slash from path, if it exists
+						if (substr($path, -1) == DIRECTORY_SEPARATOR) {
+							$path = substr($path, 0, -1);
+						}
 						if (is_dir($path)) {
 							if (is_dir($path . DIRECTORY_SEPARATOR . '.svn')) {
 								unset($out);
@@ -1295,11 +1269,8 @@ class Tools_WADF {
 									unset($out);
 									$this->_runSVN("switch -r $dep->version $dep->name $path");
 									if (file_exists("$path/package.xml")) {
-										if (!$pear_setup) {
-											$standalone_pear = $this->_setupPEAR($dir);
-											$pear_setup = true;
-										}
-										$this->_runPEAR("install -f $path/package.xml");
+										$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
+										$local_pear_packages_to_install[] = "$path/package.xml";
 									}
 								} else {
 									$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path is not a clean working copy", self::DEBUG_ERROR);
@@ -1328,6 +1299,7 @@ class Tools_WADF {
 			// See if we need PEAR for this deployment
 			if (file_exists("$dir/package.xml")) {
 				$standalone_pear = $this->_setupPEAR($dir);
+				$pear_setup = true;
 		
 				$this->_debugOutput("Installing PEAR dependencies...", self::DEBUG_GENERAL);
 				$application_dir = '';
@@ -1338,6 +1310,66 @@ class Tools_WADF {
 				}
 		
 				$this->_runPEAR("$application_dir upgrade --onlyreqdeps -f $dir/package.xml", true, true, true);
+			}
+		}
+		
+		// Check for local PEAR packages
+		$local_pear_package_dirs = $this->resolveMacro('dep_pear_local_package_dirs');
+		if ($local_pear_package_dirs && !$local_pear_package_dirs != '@dep_pear_local_package_dirs@') {
+			$package_dirs = explode(',', $local_pear_package_dirs);
+			foreach ($package_dirs as $package_dir) {
+				$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($package_dir);
+				$this->_debugOutput("Looking for local PEAR packages in $dir_to_check...", self::DEBUG_INFORMATION);
+				$files = self::listAllFiles($dir_to_check);
+				foreach ($files as $file) {
+					$basename = basename($file);
+					if ($basename == 'package.xml' || $basename == 'package2.xml') {
+						if (!in_array($file, $local_pear_packages_to_install)) {
+							$this->_debugOutput("Marking $file as a PEAR package to install...", self::DEBUG_INFORMATION);
+							$local_pear_packages_to_install[] = $file;
+						} else {
+							$this->_debugOutput("Not marking $file as a PEAR package to install; already listed...", self::DEBUG_INFORMATION);
+						}
+					}
+				}
+			}
+		}
+		
+		// Set up a PEAR installation if we need it and it hasn't already been set up
+		if (count($pear_deps_to_force_install) > 0 || count($local_pear_packages_to_install) > 0) {
+			if (!$pear_setup) {
+				$standalone_pear = $this->_setupPEAR($dir);
+				$pear_setup = true;
+			}
+		}
+		
+		// Install local PEAR packages
+		if (count($local_pear_packages_to_install) > 0) {
+			$list_of_packages = implode(' ', $local_pear_packages_to_install);
+			foreach ($local_pear_packages_to_install as $pkg) {
+				$short_list_of_packages[] = substr($pkg, strlen($dir)+1);
+			}
+			$short_list_of_packages = implode(' ', $short_list_of_packages);
+			$this->_debugOutput("Installing local PEAR packages $short_list_of_packages...", self::DEBUG_GENERAL);
+			$this->_runPEAR("install --onlyreqdeps -f $list_of_packages", true, true, false);
+		}
+		
+		// Force-install tagged PEAR dependencies
+		if (count($pear_deps_to_force_install) > 0) {
+			$final_list_of_deps_to_force_install = array();
+			foreach ($pear_deps_to_force_install as $pkg_to_install) {
+				// we do this on every iteration in case a previous install has
+				// changed the list
+				$pkgs = $this->_getInstalledPearPackages();
+				// dep->name includes the channel name
+				if (!in_array($pkg_to_install, $pkgs)) {
+					$final_list_of_deps_to_force_install[] = $pkg_to_install;
+				}
+			}
+			if (count($final_list_of_deps_to_force_install) > 0) {
+				$list_of_deps = implode(' ', $final_list_of_deps_to_force_install);
+				$this->_debugOutput("Force-installing $list_of_deps", self::DEBUG_INFORMATION);
+				$this->_runPEAR('install --force --nodeps ' . $list_of_deps, true, false, false);
 			}
 		}
 		
