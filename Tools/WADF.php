@@ -1226,7 +1226,7 @@ class Tools_WADF {
 		if ($local_pear_package_dirs && !$local_pear_package_dirs != '@dep_pear_local_package_dirs@') {
 			$package_dirs = explode(',', $local_pear_package_dirs);
 			foreach ($package_dirs as $package_dir) {
-				$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($dir);
+				$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($package_dir);
 				$this->_debugOutput("Looking for local PEAR packages in $dir_to_check...", self::DEBUG_INFORMATION);
 				$files = self::listAllFiles($dir);
 				foreach ($files as $file) {
