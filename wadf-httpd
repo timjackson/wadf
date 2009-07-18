@@ -317,7 +317,7 @@ switch ($command) {
 		
 	case 'reloadstart':
 		if (file_exists($pidfile)) {
-			reload();
+			reload($show_instance_info);
 		} else {
 			start($show_instance_info);
 		}
