@@ -21,6 +21,7 @@
 set_include_path('.:@php_dir@');
 
 require_once 'Tools/WADF.php';
+require_once 'Console/Getopt.php'; // this is from PEAR
 
 set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
 
@@ -30,6 +31,8 @@ $httpd='/usr/sbin/httpd';
 
 $source_conffile = '@cfg_dir@/Tools_WADF/httpd.conf.sample';
 
+$command = null;
+$show_instance_info = null;
 $pidfile = "$WADF_HOME/httpd.pid";
 $portfile = "$WADF_HOME/httpd.port";
 $lockfile = "$WADF_HOME/httpd.lock";
@@ -40,20 +43,60 @@ $default_vhost_file = "$vhost_dir/00-default.conf";
 $default_error_page = "$WADF_HOME/default_error_page.html";
 $prog = 'WADF HTTPD instance';
 
-if (isset($argv) && isset($argv[1]) && $argv[1] == '-V') {
-	print Tools_WADF::getAboutText();
-	exit(0);
+$con = new Console_Getopt;
+$args = $con->readPHPArgv();
+array_shift($args);
+$options = $con->getopt2($args, 'Vi:', array('help'));
+
+$usage_text = "Usage: wadf-httpd [<options>] COMMAND
+
+Options:
+  -i APPREF       Show status info only for deployed instance APPREF (does not
+                  apply to 'stop' command)
+  -V              Show WADF version & licensing information, then exit
+
+Commands:
+  start           Start the webserver
+  stop            Stop the webserver
+  restart         Hard-restart the webserver
+  condrestart     Restart the webserver (does not start if not already running)
+  reload          Gracefully restart the webserver
+  reloadstart     Gracefully restart the webserver; start if not already running
+  status          Show status information about deployed applications
+  graceful        See 'reload'
+  configtest      Check the webserver configuration for validity\n";
+
+if (PEAR::isError($options)) {
+	print $usage_text;
+	exit(1);
 }
 
-if (!isset($argv) && !isset($argv[1])) {
-	print "Usage: wadf-httpd [start|stop|restart|condrestart|reload|reloadstart|status|graceful|configtest]\n";
+foreach ($options[0] as $option) {
+	switch ($option[0]) {
+		case 'V':
+			print Tools_WADF::getAboutText();
+			exit(0);
+			break;
+		case 'i':
+			$show_instance_info = $option[1];
+			break;
+		case '--help':
+			print $usage_text;
+			exit(0);
+	}
+}
+
+if (!isset($options[1]) || !isset($options[1][0])) {
+	print "No command specified\n";
 	exit(5);
 }
+
+$command = $options[1][0];
 
 $ret = 0;
 $out = array();
 
-function start()
+function start($show_instance_info=null)
 {
 	global $prog, $ret, $out, $httpd, $conffile, $pidfile, $portfile, $lockfile, $errlogfile, $vhost_dir, $source_conffile, $WADF_HOME, $default_vhost_file, $default_error_page;
 	if (file_exists($pidfile)) {
@@ -116,7 +159,7 @@ function start()
 		exec($cmd, $out, $ret);
 		if ($ret == 0) {
 			touch($lockfile);
-			list_vhosts();
+			list_vhosts($show_instance_info);
 		}
 	} else {
 		$out[] = "Not starting due to syntax error in HTTPD configuration file";
@@ -143,7 +186,7 @@ function stop()
 	}
 }
 
-function reload()
+function reload($show_instance_info=null)
 {
 	global $prog, $ret, $out, $conffile, $httpd, $pidfile;
 	echo "Reloading $prog: ";
@@ -157,15 +200,15 @@ function reload()
 			if (is_really_running($pid)) {
 				exec("kill -HUP ".file_get_contents(trim($pidfile)), $out, $ret);
 				if ($ret == 0) {
-					list_vhosts();
+					list_vhosts($show_instance_info);
 				}
 			} else {
 				$out[] = "$prog is not running; starting\n";
-				start();
+				start($show_instance_info);
 			}
 		} else {
 			$out[] = "$prog is not running; starting\n";
-			start();
+			start($show_instance_info);
 		}
 	}
 }
@@ -182,7 +225,7 @@ function check_config()
 	@unlink($stderr);
 }
 
-function list_vhosts()
+function list_vhosts($show_instance_info=null)
 {
 	global $out, $portfile, $vhost_dir, $default_error_page;
 	
@@ -194,19 +237,13 @@ function list_vhosts()
 		exit(5);
 	}
 	
-	if (count($vhosts) > 0) {
-		$out[] = "Listening on port $port and configured for the following applications:";
+	if (!is_null($show_instance_info) && isset($vhosts[$show_instance_info])) {
+		$out[] = "Listening on port $port; configured for " . count($vhosts) . " applications including:";
+		$out = array_merge($out, list_vhost_info($show_instance_info, $vhosts[$show_instance_info], $port));
+	} elseif (count($vhosts) > 0) {
+		$out[] = "Listening on port $port; configured for the following applications:";
 		foreach ($vhosts as $appname => $details) {
-			$out[] = "\n $appname: (" . $details['working_dir'] . ')' . "\n   ver=" . $details['deploy_version'];
-			foreach ($details['vhosts'] as $vhost_details) {
-				$vhost_details['interface'] = str_replace('*', ":$port", $vhost_details['interface']);
-				
-				$line = '   http://' . $vhost_details['hostname'] . $vhost_details['interface'];
-				if (isset($vhost_details['description'])) {
-					$line .= ' (' . $vhost_details['description'] . ')';
-				}
-				$out[] = $line;
-			}
+			$out = array_merge($out, list_vhost_info($appname, $details, $port));
 		}
 	}
 	
@@ -248,9 +285,25 @@ function list_vhosts()
 
 }
 
-switch ($argv[1]) {
+function list_vhost_info($appname, $details, $port)
+{
+	$out = array();
+	$out[] = "\n $appname: (" . $details['working_dir'] . ')' . "\n   ver=" . $details['deploy_version'];
+	foreach ($details['vhosts'] as $vhost_details) {
+		$vhost_details['interface'] = str_replace('*', ":$port", $vhost_details['interface']);
+		
+		$line = '   http://' . $vhost_details['hostname'] . $vhost_details['interface'];
+		if (isset($vhost_details['description'])) {
+			$line .= ' (' . $vhost_details['description'] . ')';
+		}
+		$out[] = $line;
+	}
+	return $out;
+}
+
+switch ($command) {
 	case 'start':
-		start();
+		start($show_instance_info);
 		break;
 		
 	case 'stop':
@@ -259,14 +312,14 @@ switch ($argv[1]) {
 		
 	case 'reload':
 	case 'graceful':
-		reload();
+		reload($show_instance_info);
 		break;
 		
 	case 'reloadstart':
 		if (file_exists($pidfile)) {
 			reload();
 		} else {
-			start();
+			start($show_instance_info);
 		}
 		break;
 		
@@ -275,7 +328,7 @@ switch ($argv[1]) {
 			$pid = trim(file_get_contents($pidfile));
 			if (is_really_running($pid)) {
 				echo "$prog is running (pid $pid)\n";
-				list_vhosts();
+				list_vhosts($show_instance_info);
 				print implode("\n",$out)."\n";
 				exit(0);
 			} else {
@@ -290,11 +343,16 @@ switch ($argv[1]) {
 		break;
 		
 	case 'restart':
-		stop();
-		do_output();
-		# Give it chance to release the TCP sockets
-		sleep(1);
-		start();
+		if (file_exists($pidfile)) {
+			$pid = trim(file_get_contents($pidfile));
+			if (is_really_running($pid)) {
+				stop();
+				do_output();
+				# Give it chance to release the TCP sockets
+				sleep(1);
+			}
+		}
+		start($show_instance_info);
 		break;
 		
 	case 'condrestart':
@@ -303,7 +361,7 @@ switch ($argv[1]) {
 			do_output();
 			# Give it chance to release the TCP sockets
 			sleep(1);
-			$ret = start();
+			$ret = start($show_instance_info);
 		} else {
 			exit(0);
 		}
@@ -315,7 +373,8 @@ switch ($argv[1]) {
 		break;
 	
 	default:
-		print "Usage: wadf-httpd [start|stop|restart|condrestart|reload|reloadstart|status|graceful|configtest]\n";
+		print "Unknown command '$command'\n";
+		print $usage_text;
 		exit(1);
 		break;
 }
