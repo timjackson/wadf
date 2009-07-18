@@ -42,7 +42,7 @@ $options = $con->getopt2($args, 'vV', array('no-kickstart', 'db-only', 'no-db', 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
 General options:
   -v                Enable debugging output
-  -V                Show WADF version, licensing information and then exit
+  -V                Show WADF version & licensing information, then exit
 
 Options to modify what the reprocessing does:
   --db-only         Just redeploy the database, don't do anything else
