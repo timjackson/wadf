@@ -105,9 +105,9 @@ The rest of this document assumes that the "short name" for this channel is "exa
 
 $ pear -d default_channel=pear.example.com login
 
-3. Finally install the base "application" and "core application" roles:
+3. Finally install the base "application" role:
 
-$ pear install example/Example_Role_Application example/Example_Role_Applicationcore
+$ pear install example/Example_Role_Application
 
 =======================================================
 WADF setup
