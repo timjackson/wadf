@@ -398,16 +398,38 @@ class Tools_WADF {
 		if ($res === false) {
 			throw new Exception("Could not select database $dbname: " . mysql_error($dbconn));
 		}
-		$res = mysql_query('SHOW TABLES', $dbconn);
+		mysql_query('SET FOREIGN_KEY_CHECKS=0', $dbconn);
+		// MySQL 5.0+
+		$res = mysql_query("SELECT table_name,table_type FROM information_schema.tables WHERE table_schema='$dbname' AND table_type IN ('VIEW', 'BASE TABLE') ORDER BY table_name", $dbconn);
 		if ($res === false) {
-			throw new Exception("Could not discover tables in database $dbname - SHOW TABLES failed");
-		}
-		mysql_query('SET FOREIGN_KEY_CHECKS=0');
-		while ($table = mysql_fetch_row($res)) {
-			$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
-			$res2 = mysql_query("DROP TABLE `" . $table[0] . "`", $dbconn);
-			if ($res2 === false) {
-				throw new Exception("Error dropping table $dbname.$table[0] :" . mysql_error($dbconn));
+			// MySQL 3.x/4.x
+			$res = mysql_query('SHOW TABLES', $dbconn);
+			if ($res === false) {
+				throw new Exception("Could not discover tables in database $dbname - SHOW TABLES failed");
+			} else {
+				while ($table = mysql_fetch_row($res)) {
+					$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
+					$res2 = mysql_query("DROP TABLE `" . $table[0] . "`", $dbconn);
+					if ($res2 === false) {
+						throw new Exception("Error dropping table $dbname.$table[0] :" . mysql_error($dbconn));
+					}
+				}
+			}
+		} else {
+			while ($table = mysql_fetch_row($res)) {
+				if ($table['1'] == 'VIEW') {
+					$this->_debugOutput("\t\tDropping view " . $table[0], self::DEBUG_INFORMATION); 
+					$res2 = mysql_query("DROP VIEW `" . $table[0] . "`", $dbconn);
+					if ($res2 === false) {
+						throw new Exception("Error dropping view $dbname.$table[0] :" . mysql_error($dbconn));
+					}
+				} else {
+					$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
+					$res2 = mysql_query("DROP TABLE `" . $table[0] . "`", $dbconn);
+					if ($res2 === false) {
+						throw new Exception("Error dropping table $dbname.$table[0] :" . mysql_error($dbconn));
+					}
+				}
 			}
 		}
 		return true;
