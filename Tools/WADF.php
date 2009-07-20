@@ -790,10 +790,6 @@ class Tools_WADF {
 				break;
 		}
 		
-		$options = '';
-		if ($raw_rev !== null) {
-			$options = "-r $raw_rev";
-		}
 		
 		$vc_base = $this->resolveMacro('vc_base');
 		
@@ -814,8 +810,12 @@ class Tools_WADF {
 		}
 		
 		$svn_full_path = "$vc_base/$this->appref/$svn_path";
+		if ($raw_rev !== null) {
+			$svn_full_path .= '@' . $raw_rev;
+		}
+
 		$this->_debugOutput("Checking out $svn_full_path...", self::DEBUG_GENERAL);
-		$cmd = "$options $svn_action $svn_full_path $destdir";
+		$cmd = "$svn_action $svn_full_path $destdir";
 		$this->_runSVN($cmd);
 		
 		$this->_writeInstanceFile("$destdir/.wadf-instance");
@@ -1268,7 +1268,7 @@ class Tools_WADF {
 								if (count($out) == 0) {
 									$this->_debugOutput("\tDeploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
 									unset($out);
-									$this->_runSVN("switch -r $dep->version $dep->name $path");
+									$this->_runSVN("switch $dep->name@$dep->version $path");
 									if (file_exists("$path/package.xml")) {
 										$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
 										$local_pear_packages_to_install[] = "$path/package.xml";
