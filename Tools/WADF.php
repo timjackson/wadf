@@ -1243,9 +1243,6 @@ class Tools_WADF {
 		$pear_setup = false;
 		$standalone_pear = false;
 		
-		// need to update SVN first
-		// BUT need to install later
-		
 		$local_pear_packages_to_install = array();
 		$pear_deps_to_force_install = array();
 		$install_pear_deps_from_packagexml = false;
@@ -1360,6 +1357,9 @@ class Tools_WADF {
 			}
 			$short_list_of_packages = implode(' ', $short_list_of_packages);
 			$this->_debugOutput("Installing local PEAR packages $short_list_of_packages...", self::DEBUG_GENERAL);
+			// First install without dependencies (saves some potential dependency problems)
+			$this->_runPEAR("install --nodeps --force $list_of_packages", true, true, false);
+			// Then install again, pulling in dependencies
 			$this->_runPEAR("install --onlyreqdeps -f $list_of_packages", true, true, false);
 		}
 		
