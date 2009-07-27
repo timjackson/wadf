@@ -1,16 +1,24 @@
 #######################################################################
 # v0.12.1 (unreleased)
 #######################################################################
+Significant improvements to dependency handling, especially where local
+copies of dependencies (e.g. libraries) which are packaged using PEAR
+packages are involved. See the new options 'dep_pear_local_package_dirs' and 
+'template_exclude_paths' options.
+Some minor but helpful interface improvements.
 
 New features:
 - #230: [Core] Add option to exclude certain paths from template processing
+- #234: [Micro HTTP server] wadf-reprocess: PEAR-install local copies of PEAR packages
 - #232: [CLI] Add --db-only option to wadf-reprocess
 - #241: [CLI] Add --deps-only option to wadf-reprocess 
-- #234: [Micro HTTP server] wadf-reprocess: PEAR-install local copies of PEAR packages 
 
 Changes/improvements:
 - #236: [Micro HTTP server] Reduce the amount of output from restarting the webserver
 - [Micro HTTP server] Improve the command line interface of "wadf-httpd" in general
+
+Bugs fixed:
+- #238: [Core] Database redeployment tries to remove views as tables
 
 #######################################################################
 # v0.12.0 (6 July 2009)
