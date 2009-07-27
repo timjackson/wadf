@@ -37,7 +37,7 @@ $deploy_ver = null;
 $con = new Console_Getopt;
 $args = $con->readPHPArgv();
 array_shift($args);
-$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
+$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db-only', 'deps-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
 General options:
@@ -45,7 +45,8 @@ General options:
   -V                Show WADF version & licensing information, then exit
 
 Options to modify what the reprocessing does:
-  --db-only         Just redeploy the database, don't do anything else
+  --db-only         Just redeploy the database; don't do anything else
+  --deps-only       Just install dependencies; don't do anything else
   --no-db           Do not re-deploy database
   --no-deps         Do not re-process dependencies
   --no-dep-tags     Do not use a dependency tags file, if it exists
@@ -74,6 +75,11 @@ foreach ($options[0] as $option) {
 			break;
 		case '--db-only':
 			$deploy_deps = false;
+			$template_processing = false;
+			break;
+		case '--deps-only':
+			$kickstart_prompt = false;
+			$db_deploy_prompt = false;
 			$template_processing = false;
 			break;
 		case '--no-kickstart':
