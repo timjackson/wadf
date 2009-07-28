@@ -339,16 +339,19 @@ trunk (default): Use the software trunk
 wadf-reprocess
 --------------
 Reprocess the current working directory as a WADF site (i.e. remake templates).
-This does not automatically re-initialise the database or re-run the kickstart script, but prompts the user individually about both.
-Optionally, it can be passed parameters to switch the working copy to a different version from the version control system. These take the following form:
+This does not automatically re-initialise the database or re-run the kickstart script. The user is prompted about the kickstart script, but not about redeploying the database as this is generally a less-commonly used (and destructive) option. To redeploy the database, pass the "--db" option. (A confirmation prompt is still shown).
+
+Optionally, wadf-reprocess can be passed parameters to switch the working copy to a different version from the version control system. These take the following form:
 
 tag/XXX:    Use the version of the software identified with tag "XXX". "tag/LATEST" means use the most recent tag.
 branch/XXX: Use the HEAD of the branch called "XXX"
 trunk:      Use the software trunk
 
 Time-saving options:
-You can skip the prompts for re-running the database deployment and kickstart process with the "--no-db" and "--no-kickstart" options respecitively.
-Dependency deployment can be skipped with --no-deps, and use of dependency tags can be avoided with --no-dep-tags.
+- You can skip the prompt for re-running the kickstart process with the "--no-kickstart" option. However, it would be better to fix the kickstart script so that it can run (safely) in all circumstances! (See the "Kickstart (setup) script" section for advice about this, in particular the DEPLOY_INITDB variable.)
+- Dependency deployment can be skipped with "--no-deps", and use of dependency tags can be avoided with "--no-dep-tags".
+- You can redeploy the database only with "--db-only".
+- You can process templates only with "--templates-only" (shortcut for "--no-deps --no-kickstart")
 
 
 wadf-list-macros [-a] [<appref>]

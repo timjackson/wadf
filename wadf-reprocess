@@ -37,7 +37,7 @@ $deploy_ver = null;
 $con = new Console_Getopt;
 $args = $con->readPHPArgv();
 array_shift($args);
-$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db-only', 'deps-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
+$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db', 'db-only', 'deps-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
 General options:
@@ -45,13 +45,13 @@ General options:
   -V                Show WADF version & licensing information, then exit
 
 Options to modify what the reprocessing does:
-  --db-only         Just redeploy the database; don't do anything else
+  --db              Redeploy the database
+  --db-only         Just redeploy the database; don't do anything else (implies --db)
   --deps-only       Just install dependencies; don't do anything else
-  --no-db           Do not re-deploy database
   --no-deps         Do not re-process dependencies
   --no-dep-tags     Do not use a dependency tags file, if it exists
   --no-kickstart    Do not run kickstart script
-  --templates-only  Only process templated files (implies --no-db, --no-deps, --no-kickstart)\n";
+  --templates-only  Only process templated files (implies --no-deps, --no-kickstart)\n";
 
 if (PEAR::isError($options)) {
 	print $usage_text;
@@ -60,7 +60,7 @@ if (PEAR::isError($options)) {
 
 $debug = false;
 $kickstart_prompt = true;
-$db_deploy_prompt = true;
+$db_deploy_prompt = false;
 $deploy_deps = true;
 $dependency_tags_enabled = true;
 $template_processing = true;
@@ -73,7 +73,11 @@ foreach ($options[0] as $option) {
 			print Tools_WADF::getAboutText();
 			exit(0);
 			break;
+		case '--db':
+			$db_deploy_prompt = true;
+			break;
 		case '--db-only':
+			$db_deploy_prompt = true;
 			$deploy_deps = false;
 			$template_processing = false;
 			break;
@@ -86,7 +90,7 @@ foreach ($options[0] as $option) {
 			$kickstart_prompt = false;
 			break;
 		case '--no-db':
-			$db_deploy_prompt = false;
+			// retained for backwards compatibility
 			break;
 		case '--no-deps':
 			$deploy_deps = false;
