@@ -2,7 +2,7 @@
 WADF - Web Application Deployment Framework
 (c)2006-2009 Tim Jackson (tim@timj.co.uk)
 
-User Guide for WADF 0.12.1
+User Guide for WADF 0.13.0
 =========================================================
 
 Introduction

@@ -1,11 +1,16 @@
 #######################################################################
-# v0.12.1 (unreleased)
+# v0.13.0 (2009-07-28)
 #######################################################################
 Significant improvements to dependency handling, especially where local
 copies of dependencies (e.g. libraries) which are packaged using PEAR
 packages are involved. See the new options 'dep_pear_local_package_dirs' and 
 'template_exclude_paths' options.
-Some minor but helpful interface improvements.
+
+The "--no-db" option to wadf-reprocess has been removed; it is now assumed
+that database redeployment is *not* required. Instead, if you want to
+redeploy, use "wadf-reprocess --db"
+
+There are also some minor but helpful interface improvements.
 
 New features:
 - #230: [Core] Add option to exclude certain paths from template processing
@@ -20,6 +25,8 @@ Changes/improvements:
 
 Bugs fixed:
 - #238: [Core] Database redeployment tries to remove views as tables
+- #237: [Micro HTTP server] wadf-httpd restart does not start if the server
+  is not already running
 
 #######################################################################
 # v0.12.0 (6 July 2009)
