@@ -161,7 +161,7 @@ class Tools_WADF {
 	 * @param string $rev_translated The revision control version. For branches this is the branch name, for tags the tag name.
 	 * @param string $raw_rev  Raw version control revision, if appropriate (not for revtype=tag). Can be HEAD.
 	 * @param bool $db_deploy  Whether or not to deploy databases to go with the application
-	 * @return void
+	 * @return bool Whether deployment succeeded
 	 */
 	public function deploy($revtype, $rev_translated, $raw_rev=null, $db_deploy=false)
 	{
@@ -181,7 +181,9 @@ class Tools_WADF {
 		$this->resolveMacrosWithFallbacksInDir($dir, $db_deploy);
 		
 		// Check for any config options that require user input
-		$this->checkOptionsRequiringInput();
+		if (!$this->checkOptionsRequiringInput()) {
+			return false;
+		}
 		
 		$this->deployDependencies($dir);
 		$this->processTemplatesInDir($dir);
@@ -2151,6 +2153,8 @@ class Tools_WADF {
 	
 	/**
 	 * Check through the entire list of options for any which require user input
+	 * 
+	 * @return bool  True if everything went OK, False if there was a problem and deployment should be terminated
 	 */
 	public function checkOptionsRequiringInput()
 	{

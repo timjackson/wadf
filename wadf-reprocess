@@ -201,7 +201,9 @@ $vc_id = $wadf->setVCVersionMacro($dir);
 print "Version of $appref is $vc_id.\n";
 
 $wadf->resolveMacrosWithFallbacksInDir($dir, $db_redeploy);
-$wadf->checkOptionsRequiringInput();
+if (!$wadf->checkOptionsRequiringInput()) {
+	exit(5);
+}
 
 if ($deploy_deps) {
 	$wadf->deployDependencies($dir, $dependency_tags_enabled);

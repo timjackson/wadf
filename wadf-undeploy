@@ -116,5 +116,7 @@ if (isset($in_use['db']) && count($in_use['db']) > 0) {
 	}
 }
 
-$WebDeploy->checkOptionsRequiringInput();
+if (!$WebDeploy->checkOptionsRequiringInput()) {
+	exit(5);
+}
 $WebDeploy->undeploy($db_undeploy) or exit(1);
