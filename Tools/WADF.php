@@ -1360,7 +1360,7 @@ class Tools_WADF {
 			$short_list_of_packages = implode(' ', $short_list_of_packages);
 			$this->_debugOutput("Installing local PEAR packages $short_list_of_packages...", self::DEBUG_GENERAL);
 			// First install without dependencies (saves some potential dependency problems)
-			$this->_runPEAR("install --nodeps --force $list_of_packages", true, true, false);
+			$this->_runPEAR("install --nodeps --force $list_of_packages", false, true, false);
 			// Then install again, pulling in dependencies
 			$this->_runPEAR("install --onlyreqdeps -f $list_of_packages", true, true, false);
 		}
