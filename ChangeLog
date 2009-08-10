@@ -2,6 +2,9 @@
 # v0.13.1 (unreleased)
 #######################################################################
 
+Changes/improvements:
+- 254: wadf-reprocess: --no-dep-tags option should be the default
+
 Bugs fixed:
 - 255: Regression: "**" in a macro value does not stop deployment
 
