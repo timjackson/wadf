@@ -13,6 +13,8 @@ Changes/improvements:
 
 Bugs fixed:
 - 255: Regression: "**" in a macro value does not stop deployment
+- 261: wadf-reprocess incorrectly calculates databases forming part of a 
+  deployment before switching to new version (if relevant)
 
 #######################################################################
 # v0.13.0 (2009-07-28)
