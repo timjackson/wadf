@@ -30,7 +30,24 @@ $args = $con->readPHPArgv();
 array_shift($args);
 $options = $con->getopt2($args, 'r:d:vV', array('no-db'));
 
-$usage_text = "Usage: wadf-deploy [-r revision; default HEAD] appref [version e.g. trunk, tag/release-1.2.3 - default 'trunk']\n";
+$usage_text = "Usage: wadf-deploy [<option> [<option> ...]] <appref> [version]
+Options:
+  -r   Specify specific version control revision to deploy; defaults to HEAD.
+       Not valid for use in conjunction with deployment of a specific tag (see
+       'version' details below)
+  -v   Enable debugging output
+  -V   Show WADF version & licensing information, then exit
+
+'appref' specifies the module name in the version control system of the
+application to be deployed.
+
+(Optional) 'version' specifies the source of the deployment in the version
+control system and can be in a number of formats:
+ 
+  'trunk' (default) - Use version control trunk
+  'tag/XYZ'         - Use tag named \"XYZ\"
+  'branch/XYZ'      - Use branch named \"XYZ\"
+";
 
 if (PEAR::isError($options)) {
 	print $usage_text;
