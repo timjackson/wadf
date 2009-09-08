@@ -166,6 +166,21 @@ if ($dir == '@deploy_path@') {
 	exit(1);
 }
 
+print "Processing $appref in $dir...\n";
+
+if ($deploy_ver !== null) {
+	$vc_info = $wadf->processVCVersionString($deploy_ver);
+	if (!is_array($vc_info)) {
+		print "ERROR: $vc_info\n";
+		exit(1);
+	}
+	print "Deploying version $deploy_ver...\n";
+	$wadf->checkout($dir, $vc_info['rev_type'], $vc_info['rev_translated']);
+}
+
+$vc_id = $wadf->setVCVersionMacro($dir);
+print "Version of $appref is $vc_id.\n";
+
 $db_redeploy = false;
 if ($db_deploy_prompt) {
 	$in_use = $wadf->enumerateMultipleEntities();
@@ -187,21 +202,6 @@ if ($db_deploy_prompt) {
 		}
 	}
 }
-
-print "Processing $appref in $dir...\n";
-
-if ($deploy_ver !== null) {
-	$vc_info = $wadf->processVCVersionString($deploy_ver);
-	if (!is_array($vc_info)) {
-		print "ERROR: $vc_info\n";
-		exit(1);
-	}
-	print "Deploying version $deploy_ver...\n";
-	$wadf->checkout($dir, $vc_info['rev_type'], $vc_info['rev_translated']);
-}
-
-$vc_id = $wadf->setVCVersionMacro($dir);
-print "Version of $appref is $vc_id.\n";
 
 $wadf->resolveMacrosWithFallbacksInDir($dir, $db_redeploy);
 if (!$wadf->checkOptionsRequiringInput()) {
