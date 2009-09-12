@@ -134,12 +134,12 @@ switch ($arg_count) {
 			$appref = $instance_file_macros['appref'];
 			$current_dir = true;
 		} else {
-			print $usage_text;
+			Tools_WADF::consoleOutput($usage_text);
 			exit(1);
 		}
 		break;
 	default:
-		print $usage_text;
+		Tools_WADF::consoleOutput($usage_text);
 		exit(1);
 }
 
@@ -162,24 +162,24 @@ $wadf = new Tools_WADF($appref,null,$macros,$initial_output_level);
 
 $dir = $wadf->resolveMacro('deploy_path');
 if ($dir == '@deploy_path@') {
-	print "ERROR: resolving deploy_path failed\n";
+	Tools_WADF::consoleOutput("ERROR: resolving deploy_path failed\n");
 	exit(1);
 }
 
-print "Processing $appref in $dir...\n";
+Tools_WADF::consoleOutput("Processing $appref in $dir...\n");
 
 if ($deploy_ver !== null) {
 	$vc_info = $wadf->processVCVersionString($deploy_ver);
 	if (!is_array($vc_info)) {
-		print "ERROR: $vc_info\n";
+		Tools_WADF::consoleOutput("ERROR: $vc_info\n");
 		exit(1);
 	}
-	print "Deploying version $deploy_ver...\n";
+	Tools_WADF::consoleOutput("Deploying version $deploy_ver...\n");
 	$wadf->checkout($dir, $vc_info['rev_type'], $vc_info['rev_translated']);
 }
 
 $vc_id = $wadf->setVCVersionMacro($dir);
-print "Version of $appref is $vc_id.\n";
+Tools_WADF::consoleOutput("Version of $appref is $vc_id.\n");
 
 $db_redeploy = false;
 if ($db_deploy_prompt) {
@@ -192,9 +192,9 @@ if ($db_deploy_prompt) {
 			$type = $wadf->resolveMacro("db${num}_type");
 			$dbs[] = "$type://$host/$name";
 		}
-		print 'This site uses the following ' . count($dbs) . ' database' . (count($dbs) > 1 ? 's' : '') . ":\n\n";
-		print implode("\n", $dbs) . "\n\n";
-		print "Do you want to redeploy these? This will ERASE the existing data.\nErase? (y/n) [default=n]:\n";
+		Tools_WADF::consoleOutput('This site uses the following ' . count($dbs) . ' database' . (count($dbs) > 1 ? 's' : '') . ":\n");
+		Tools_WADF::consoleOutput(implode("\n", $dbs) . "\n");
+		Tools_WADF::consoleOutput("Do you want to redeploy these? This will ERASE the existing data.\nErase? (y/n) [default=n]:");
 		$db_redeploy_question = strtolower(trim(fgets(STDIN)));
 
 		if ($db_redeploy_question == 'y') {
@@ -209,6 +209,15 @@ if (!$wadf->checkOptionsRequiringInput()) {
 }
 
 if ($deploy_deps) {
+
+	if (!$dependency_tags_enabled) {
+		$dep_tags_file = $wadf->resolveMacro('dep_tags_file');
+		if (file_exists($dep_tags_file)) {
+			Tools_WADF::consoleOutput("IMPORTANT: A dependency tags file exists, but it will NOT be used (the '--dep-tags' option was not specified). This is probably correct for normal development use, but not for 'known-good' deployment.\nPress ENTER to continue.");
+			fgets(STDIN);
+		}
+	}
+
 	$wadf->deployDependencies($dir, $dependency_tags_enabled);
 }
 
