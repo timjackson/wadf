@@ -10,6 +10,7 @@ Changes/improvements:
 - 254: wadf-reprocess: --no-dep-tags option should be the default
 - 245: Dependency warnings on first-time install with dependency tags 
 - 257: Improve help output for wadf-deploy to make 'version' syntax clearer
+- Use PEAR bug workarounds when installing local SVN checkouts
 
 Bugs fixed:
 - 255: Regression: "**" in a macro value does not stop deployment

@@ -1362,7 +1362,8 @@ class Tools_WADF {
 			// First install without dependencies (saves some potential dependency problems)
 			$this->_runPEAR("install --nodeps --force $list_of_packages", false, true, false);
 			// Then install again, pulling in dependencies
-			$this->_runPEAR("install --onlyreqdeps -f $list_of_packages", true, true, false);
+			// We enable PEAR bug workarounds here as they can just as well strike for local packages
+			$this->_runPEAR("install --onlyreqdeps -f $list_of_packages", true, true, true);
 		}
 		
 		// Force-install tagged PEAR dependencies
