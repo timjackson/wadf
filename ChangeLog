@@ -1,5 +1,5 @@
 #######################################################################
-# v0.13.1 (unreleased)
+# v0.13.1 (2009-09-13)
 #######################################################################
 Dependency tags are no longer used by default for wadf-reprocess (they are still
 used for initial deployment; use "wadf-reprocess --dep-tags" if you want to use
@@ -8,7 +8,7 @@ behaviour would occur if "**" was used in a macro.
 
 Changes/improvements:
 - 254: wadf-reprocess: --no-dep-tags option should be the default
-- 245: Dependency warnings on first-time install with dependency tags 
+- 245: Bogus dependency warnings on first-time install with dependency tags 
 - 257: Improve help output for wadf-deploy to make 'version' syntax clearer
 - Use PEAR bug workarounds when installing local SVN checkouts
 
@@ -16,6 +16,7 @@ Bugs fixed:
 - 255: Regression: "**" in a macro value does not stop deployment
 - 261: wadf-reprocess incorrectly calculates databases forming part of a 
   deployment before switching to new version (if relevant)
+
 
 #######################################################################
 # v0.13.0 (2009-07-28)
@@ -46,6 +47,7 @@ Bugs fixed:
 - #238: [Core] Database redeployment tries to remove views as tables
 - #237: [Micro HTTP server] wadf-httpd restart does not start if the server
   is not already running
+
 
 #######################################################################
 # v0.12.0 (6 July 2009)
