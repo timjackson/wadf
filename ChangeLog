@@ -1,4 +1,10 @@
 #######################################################################
+# v0.13.2 (unreleased)
+#######################################################################
+Changes/improvements:
+- #265: Output from post deploy script should be marked more clearly
+
+#######################################################################
 # v0.13.1 (2009-09-13)
 #######################################################################
 Dependency tags are no longer used by default for wadf-reprocess (they are still
