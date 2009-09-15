@@ -10,10 +10,10 @@
   <email>tim@timj.co.uk</email>
   <active>yes</active>
  </lead>
- <date>2009-09-13</date>
+ <date>2009-09-15</date>
  <version>
-  <release>0.13.1</release>
-  <api>0.13.1</api>
+  <release>0.13.2a</release>
+  <api>0.13.2a</api>
  </version>
  <stability>
   <release>beta</release>
