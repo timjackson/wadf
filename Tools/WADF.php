@@ -771,7 +771,7 @@ class Tools_WADF {
 			$php_ini = $this->resolveMacro('php_config_location');
 			$php_ini_source = $dir . '/' . $php_ini;
 			if (file_exists($php_ini_source)) {
-				$this->_debugOutput("Deploying PHP config file $php_ini...", self::DEBUG_GENERAL);
+				$this->_debugOutput("Deploying PHP config file to $php_ini_dest...", self::DEBUG_GENERAL);
 				
 				$source = file_get_contents($php_ini_source);
 				$php_ini_local = trim($this->resolveMacro('php_config_location_extra'));
