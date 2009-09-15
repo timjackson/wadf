@@ -692,8 +692,10 @@ class Tools_WADF {
 	{
 		$cmd = $this->resolveMacro('post_deploy_script');
 		if ($cmd != '@post_deploy_script@' && !empty($cmd)) {		
-			$this->_debugOutput("Running post-deploy script $cmd...", self::DEBUG_GENERAL);
+			$this->_debugOutput("Running post-deploy script \"$cmd...\"", self::DEBUG_GENERAL);
+			$this->_debugOutput('---------- OUTPUT BELOW IS FROM POST DEPLOY SCRIPT, NOT WADF ----------', self::DEBUG_GENERAL);
 			passthru($cmd);
+			$this->_debugOutput('------------------ END OF POST DEPLOY SCRIPT OUTPUT -------------------', self::DEBUG_GENERAL);
 		}
 	}
 	
