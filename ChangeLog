@@ -6,6 +6,9 @@ Changes/improvements:
 - #266: Improve output when deploying PHP CGI config
 - #200: Abstract version control-specific details
 
+Bugs fixed:
+- #268: Issues with versions of SVN less than 1.5
+
 #######################################################################
 # v0.13.1 (2009-09-13)
 #######################################################################
