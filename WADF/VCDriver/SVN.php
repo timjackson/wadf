@@ -57,7 +57,13 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	
 	public function switchVer($revtype, $rev_translated, $raw_rev, $dest_path)
 	{
-		$this->_runSVN("switch -r $version $src_path $dest_path");
+		$src_path = $this->_getSVNPath($revtype, $rev_translated);
+		$this->_runSVN("switch -r $raw_rev $src_path $dest_path");
+	}
+	
+	public function switchVerFromPath($src_path, $raw_rev, $dest_path)
+	{
+		$this->_runSVN("switch -r $raw_rev $src_path $dest_path");
 	}
 	
 	public function listTags()

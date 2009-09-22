@@ -151,10 +151,15 @@ class Tools_WADF {
 				throw new Exception("Version control plugin '$vc_type' is not supported");
 		}
 		if ($load_vc_plugin) {
-			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver' . DIRECTORY_SEPARATOR . $load_vc_plugin . '.php';
-			$vc_class = 'Tools_WADF_VCDriver_' . $load_vc_plugin;
+			$vc_class = self::loadVCDriver($load_vc_plugin);
 			$this->_vc_plugin = new $vc_class($this);
 		}
+	}
+	
+	public static function loadVCDriver($driver)
+	{
+		require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver' . DIRECTORY_SEPARATOR . $driver. '.php';
+		return 'Tools_WADF_VCDriver_' . $driver;
 	}
 	
 	protected function _setInternalMacros()
@@ -921,7 +926,7 @@ class Tools_WADF {
 	public static function readVCInfoFromDir($dir)
 	{
 		if (file_exists($dir . DIRECTORY_SEPARATOR . '.svn')) {
-			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver' . DIRECTORY_SEPARATOR . 'SVN.php';
+			self::loadVCDriver('SVN');
 			return Tools_WADF_VCDriver_SVN::readVCInfoFromDir($dir);
 		}
 		return false;
@@ -1193,6 +1198,8 @@ class Tools_WADF {
 					if ($dep->type == Tools_WADF_Dependency::TYPE_PEAR) {
 						$pear_deps_to_force_install[] = $dep->name . '-' . $dep->version;
 					} else if ($dep->type == Tools_WADF_Dependency::TYPE_SVN) {
+						self::loadVCDriver('SVN');
+						$svn = new Tools_WADF_VCDriver_SVN($this);
 						// dep->name is the SVN path to check out
 						// dep->metadata contains relative path
 						$path = $this->resolveMacro('deploy_path') . DIRECTORY_SEPARATOR . $dep->metadata;
@@ -1207,7 +1214,7 @@ class Tools_WADF {
 								if (count($out) == 0) {
 									$this->_debugOutput("\tDeploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
 									unset($out);
-									$this->runCmd("svn switch $dep->name@$dep->version $path");
+									$svn->switchVerFromPath($dep->name, $dep->version, $path);
 									if (file_exists("$path/package.xml")) {
 										$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
 										$local_pear_packages_to_install[] = "$path/package.xml";
@@ -1221,7 +1228,7 @@ class Tools_WADF {
 							}
 						} else {
 							$this->_debugOutput("\tDeploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
-							$this->_vc_plugin->checkoutFromPath($dep->name, $dep->version, $path);
+							$svn->checkoutFromPath($dep->name, $dep->version, $path);
 							
 							if (file_exists("$path/package.xml")) {
 								$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
