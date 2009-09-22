@@ -1207,7 +1207,7 @@ class Tools_WADF {
 								if (count($out) == 0) {
 									$this->_debugOutput("\tDeploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
 									unset($out);
-									$this->_runSVN("switch $dep->name@$dep->version $path");
+									$this->runCmd("svn switch $dep->name@$dep->version $path");
 									if (file_exists("$path/package.xml")) {
 										$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
 										$local_pear_packages_to_install[] = "$path/package.xml";
@@ -2213,6 +2213,19 @@ class Tools_WADF {
 		}
 		ksort($vhosts);
 		return $vhosts;
+	}
+
+	public function runCmd($cmd)
+	{
+		$this->_debugOutput("Running $cmd", self::DEBUG_INFORMATION);
+		exec($cmd, $output, $ret);
+		if ($do_output) {
+			$this->_debugOutput(implode("\n",$output), self::DEBUG_VERBOSE);
+		}
+		if ($ret != 0) {
+			throw new Exception("Error running command '$cmd'");
+		}
+		return $output;
 	}
 	
 	protected function _appendMacroDefsTop($array)

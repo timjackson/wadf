@@ -155,15 +155,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	protected function _runSVN($params, $do_output=true)
 	{
 		$cmd = "svn $params";
-		$this->_debugOutput("Running $cmd", self::DEBUG_INFORMATION);
-		exec($cmd, $output, $ret);
-		if ($do_output) {
-			$this->_debugOutput(implode("\n",$output), self::DEBUG_VERBOSE);
-		}
-		if ($ret != 0) {
-			throw new Exception("Error running SVN command '$cmd'");
-		}
-		return $output;
+		return $this->_wadf->runCmd($cmd);
 	}
 	
 	protected function _getSVNPath($revtype, $rev_translated)
