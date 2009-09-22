@@ -2222,7 +2222,7 @@ class Tools_WADF {
 		return $vhosts;
 	}
 
-	public function runCmd($cmd)
+	public function runCmd($cmd, $do_output=true)
 	{
 		$this->_debugOutput("Running $cmd", self::DEBUG_INFORMATION);
 		exec($cmd, $output, $ret);

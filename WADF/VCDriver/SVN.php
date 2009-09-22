@@ -159,7 +159,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	protected function _runSVN($params, $do_output=true)
 	{
 		$cmd = "svn $params";
-		return $this->_wadf->runCmd($cmd);
+		return $this->_wadf->runCmd($cmd, $do_output);
 	}
 	
 	protected function _getSVNPath($revtype, $rev_translated)
