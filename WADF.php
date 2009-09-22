@@ -84,9 +84,9 @@ class Tools_WADF {
 	 );
 	
 	/**
-	 * @var Tools_WADF_Driver_Interface  Version control driver in use
+	 * @var Tools_WADF_VCDriver_Interface  Version control driver in use
 	 */
-	protected $_vc_plugin = null;
+	protected $_vc = null;
 	
 	/**
 	 * Macros that were passed from the command line. Only used for writing
@@ -152,7 +152,7 @@ class Tools_WADF {
 		}
 		if ($load_vc_plugin) {
 			$vc_class = self::loadVCDriver($load_vc_plugin);
-			$this->_vc_plugin = new $vc_class($this);
+			$this->_vc = new $vc_class($this);
 		}
 	}
 	
@@ -845,13 +845,13 @@ class Tools_WADF {
 			$this->cleanGeneratedFiles($destdir);
 		}
 
-		$checkout_desc = $this->_vc_plugin->getLabel($revtype, $rev_translated, $raw_rev);
+		$checkout_desc = $this->_vc->getLabel($revtype, $rev_translated, $raw_rev);
 		$this->_debugOutput("Checking out $checkout_desc...", self::DEBUG_GENERAL);
 		
 		if ($action == 'checkout') {
-			$this->_vc_plugin->checkout($this->appref, $revtype, $rev_translated, $raw_rev);
+			$this->_vc->checkout($this->appref, $revtype, $rev_translated, $raw_rev);
 		} else {
-			$this->_vc_plugin->switchVer($this->appref, $revtype, $rev_translated, $raw_rev);
+			$this->_vc->switchVer($this->appref, $revtype, $rev_translated, $raw_rev);
 		}
 		
 		$this->_writeInstanceFile("$destdir/.wadf-instance");
@@ -989,7 +989,7 @@ class Tools_WADF {
 					}
 					
 					if ($out['rev_translated'] == 'LATEST') {
-						$tags = $this->_vc_plugin->listTags();
+						$tags = $this->_vc->listTags();
 						if ($tags === false) return 'Listing tags failed';
 						$tags = $this->_sortVersions($tags);
 						if (count($tags) == 0) {
