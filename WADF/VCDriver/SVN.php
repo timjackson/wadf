@@ -62,9 +62,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	
 	public function listTags()
 	{
-		$vc_base = $this->resolveMacro('vc_base');
-		
-		$cmd = "list -R $vc_base/$this->appref/tags 2>/dev/null";
+		$cmd = 'list -R ' . $this->_svnroot . '/' . $this->_appref . '/tags 2>/dev/null';
 		$output = $this->_runSVN($cmd, false);
 		if ($output === false) {
 			throw new Exception('Error when listing tags - perhaps there aren\'t any?');
