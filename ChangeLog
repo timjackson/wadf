@@ -4,6 +4,7 @@
 Changes/improvements:
 - #265: Output from post deploy script should be marked more clearly
 - #266: Improve output when deploying PHP CGI config
+- #200: Abstract version control-specific details
 
 #######################################################################
 # v0.13.1 (2009-09-13)

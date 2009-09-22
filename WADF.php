@@ -82,7 +82,12 @@ class Tools_WADF {
 		'db(\d+)_deploy_user' => 'db_deploy_user',
 		'db(\d+)_deploy_pass' => 'db_deploy_pass'
 	 );
-	 
+	
+	/**
+	 * @var Tools_WADF_Driver_Interface  Version control driver in use
+	 */
+	protected $_vc_plugin = null;
+	
 	/**
 	 * Macros that were passed from the command line. Only used for writing
 	 * instance files.
@@ -131,6 +136,25 @@ class Tools_WADF {
 		// Process macros
 		$this->resolveAllMacros();
 		$this->_setPEARMacros();
+		
+		// Load version control plugin
+		$vc_type = strtolower($this->resolveMacro('vc_type'));
+		$load_vc_plugin = null;
+		switch ($vc_type) {
+			case 'svn':
+				$load_vc_plugin = 'SVN';
+				break;
+			case 'none':
+			case '@vc_type@':
+				break;
+			default:
+				throw new Exception("Version control plugin '$vc_type' is not supported");
+		}
+		if ($load_vc_plugin) {
+			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver' . DIRECTORY_SEPARATOR . $load_vc_plugin . '.php';
+			$vc_class = 'Tools_WADF_VCDriver_' . $load_vc_plugin;
+			$this->_vc_plugin = new $vc_class($this);
+		}
 	}
 	
 	protected function _setInternalMacros()
@@ -788,7 +812,6 @@ class Tools_WADF {
 		return true;
 	}
 	
-	// To support additional version control systems the below function would need to be abstracted
 	/**
 	 * Check out something from version control system
 	 * @param string $destdir         The destination to check a working copy out to
@@ -801,100 +824,37 @@ class Tools_WADF {
 		// MODULE is appref
 		// BASE URL is vc_base
 		
-		switch ($revtype) {
-			case Tools_WADF::VCREFTYPE_TRUNK:
-				$svn_path = 'trunk';
-				break;
-			case Tools_WADF::VCREFTYPE_BRANCH:
-				$svn_path = "branches/$rev_translated";
-				break;
-			case Tools_WADF::VCREFTYPE_TAG:
-				$svn_path = "tags/$rev_translated";
-				if ($raw_rev !== null && $raw_rev != 'HEAD') {
-					throw new Exception("Don't pass a raw revision when checking out a tag");
-				}
-				break;
-		}
-		
-		
-		$vc_base = $this->resolveMacro('vc_base');
-		
 		// See if we already have a checked-out copy
 		// We could just do a file_exists() on .wadf-instance, but actually
-		// checking for SVN metadata is safer
+		// checking for version control metadata is safer
 		$vc_info = $this->readVCInfoFromDir($destdir);
 		
-		$svn_action = 'checkout';
+		$action = 'checkout';
 		if (is_object($vc_info)) {
-			$svn_action = 'switch';
+			$action = 'switch';
 		}
 		
-		if ($svn_action == 'checkout') {
+		if ($action == 'checkout') {
 			$this->_rmDir($destdir);
 		} else {
 			$this->cleanGeneratedFiles($destdir);
 		}
-		
-		$svn_full_path = "$vc_base/$this->appref/$svn_path";
-		if ($raw_rev !== null) {
-			$svn_full_path .= '@' . $raw_rev;
-		}
 
-		$this->_debugOutput("Checking out $svn_full_path...", self::DEBUG_GENERAL);
-		$cmd = "$svn_action $svn_full_path $destdir";
-		$this->_runSVN($cmd);
+		$checkout_desc = $this->_vc_plugin->getLabel($revtype, $rev_translated, $raw_rev);
+		$this->_debugOutput("Checking out $checkout_desc...", self::DEBUG_GENERAL);
+		
+		if ($action == 'checkout') {
+			$this->_vc_plugin->checkout($this->appref, $revtype, $rev_translated, $raw_rev);
+		} else {
+			$this->_vc_plugin->switchVer($this->appref, $revtype, $rev_translated, $raw_rev);
+		}
 		
 		$this->_writeInstanceFile("$destdir/.wadf-instance");
 		
 		$this->setVCVersionMacro($destdir);
 		return true;
 	}
-	
-	/**
-	 * Execute an external SVN function
-	 *
-	 * @param string $params  The parameters to use on the command line
-	 * @param bool $do_output  Whether to send SVN command output to _debugOutput()
-	 * @return array|bool  Array of output lines from SVN, or FALSE if there was an error
-	 */
-	protected function _runSVN($params, $do_output=true)
-	{
-		$cmd = "svn $params";
-		$this->_debugOutput("Running $cmd", self::DEBUG_INFORMATION);
-		exec($cmd, $output, $ret);
-		if ($do_output) {
-			$this->_debugOutput(implode("\n",$output), self::DEBUG_VERBOSE);
-		}
-		if ($ret != 0) {
-			throw new Exception("Error running SVN command '$cmd'");
-		}
-		return $output;
-	}
-	
-	/**
-	 * List tags available in version control for the current app
-	 *
-	 * @return array  List of tags
-	 */
-	protected function _listTags()
-	{
-		$vc_base = $this->resolveMacro('vc_base');
 		
-		$cmd = "list -R $vc_base/$this->appref/tags 2>/dev/null";
-		$output = $this->_runSVN($cmd, false);
-		if ($output === false) {
-			throw new Exception('Error when listing tags - perhaps there aren\'t any?');
-		}
-		
-		$tags = array();
-		foreach ($output as $line) {
-			if (substr($line, -1) == '/') {
-				$tags[] = substr($line, 0, -1);
-			}
-		}
-		return $tags;
-	}
-	
 	/**
 	 * Write a WADF instance file
 	 *
@@ -954,61 +914,17 @@ class Tools_WADF {
 		return $vc_id;
 	}
 	
-	// This would need to be abstracted to support more than just SVN as a version control system
 	/**
 	 * Read version control info from deployed copy
 	 * @return Tools_WADF_VCInfo|false
 	 */
 	public static function readVCInfoFromDir($dir)
 	{
-		$cmd = "svn info $dir 2>/dev/null";
-		exec($cmd, $output);
-		
-		$info = new Tools_WADF_VCInfo();
-		$info->modifications = false;
-		
-		foreach ($output as $line)
-		{
-			if (preg_match('/^URL: (.+)$/', $line, $matches)) {
-				$info->url = trim($matches[1]);
-			} else if (preg_match('/^Last Changed Rev: (\d+)$/', $line, $matches)) {
-				$info->rev_raw = trim($matches[1]);
-			}
+		if (file_exists($dir . DIRECTORY_SEPARATOR . '.svn')) {
+			require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver' . DIRECTORY_SEPARATOR . 'SVN.php';
+			return Tools_WADF_VCDriver_SVN::readVCInfoFromDir($dir);
 		}
-		
-		if (empty($info->url) || empty($info->rev_raw)) {
-			return false;
-		}
-		
-		if (preg_match('|/trunk$|', $info->url)) {
-			$info->rev_type = Tools_WADF::VCREFTYPE_TRUNK;
-		} else if (preg_match('|/tags/([^/]+)$|', $info->url, $matches)) {
-			$info->rev_type = Tools_WADF::VCREFTYPE_TAG;
-			$info->rev_translated = $matches[1];
-		} else if (preg_match('|/branches/([^/]+)$|', $info->url, $matches)) {
-			$info->rev_type = Tools_WADF::VCREFTYPE_BRANCH;
-			$info->rev_translated = $matches[1];
-		} else {
-			// Could not work out VC rev type from URL
-			/*
-			Used to return:
-			$info->rev_type = Tools_WADF::VCREFTYPE_UNKNOWN;
-			$info->rev_translated = 'unknown';
-			*/
-			return false;
-		}
-		
-		// Check for modifications
-		$cmd = "svn st $dir 2>/dev/null";
-		unset($output);
-		exec($cmd, $output); // Don't use _runSVN as this is a static function
-		foreach ($output as $line) {
-			if (preg_match('/^\s*M/', $line)) {
-				$info->modifications = true;
-			}
-		}
-		
-		return $info;
+		return false;
 	}
 	
 	/**
@@ -1068,7 +984,7 @@ class Tools_WADF {
 					}
 					
 					if ($out['rev_translated'] == 'LATEST') {
-						$tags = $this->_listTags();
+						$tags = $this->_vc_plugin->listTags();
 						if ($tags === false) return 'Listing tags failed';
 						$tags = $this->_sortVersions($tags);
 						if (count($tags) == 0) {
@@ -1305,7 +1221,8 @@ class Tools_WADF {
 							}
 						} else {
 							$this->_debugOutput("\tDeploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
-							$this->_runSVN("checkout $dep->name@$dep->version $path");
+							$this->_vc_plugin->checkoutFromPath($dep->name, $dep->version, $path);
+							
 							if (file_exists("$path/package.xml")) {
 								$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
 								$local_pear_packages_to_install[] = "$path/package.xml";

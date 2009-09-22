@@ -46,12 +46,16 @@
   	</file>
   	<file name="ChangeLog" role="doc"/>
   	<file name="COPYING" role="doc"/>
-	<dir name="Tools">
-		<file name="WADF.php" role="php">
-			<tasks:replace from="@cfg_dir@" to="cfg_dir" type="pear-config"/>
-			<tasks:replace from="@package_version@" to="version" type="package-info"/>
-		</file>
-  	</dir>
+	<file name="WADF.php" role="php" baseinstalldir="Tools">
+		<tasks:replace from="@cfg_dir@" to="cfg_dir" type="pear-config"/>
+		<tasks:replace from="@package_version@" to="version" type="package-info"/>
+	</file>
+	<dir name="WADF" baseinstalldir="Tools">
+		<dir name="VCDriver">
+			<file name="Interface.php" role="php"/>
+			<file name="SVN.php" role="php"/>
+		</dir>
+	</dir>
   	<dir name="docs">
 	  	<file name="Credits.txt" role="doc"/>
   		<file name="wadf.txt" role="doc"/>
