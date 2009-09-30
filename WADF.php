@@ -849,9 +849,9 @@ class Tools_WADF {
 		$this->_debugOutput("Checking out $checkout_desc...", self::DEBUG_GENERAL);
 		
 		if ($action == 'checkout') {
-			$this->_vc->checkout($this->appref, $revtype, $rev_translated, $raw_rev);
+			$this->_vc->checkout($revtype, $rev_translated, $raw_rev, $destdir);
 		} else {
-			$this->_vc->switchVer($this->appref, $revtype, $rev_translated, $raw_rev);
+			$this->_vc->switchVer($revtype, $rev_translated, $raw_rev, $destdir);
 		}
 		
 		$this->_writeInstanceFile("$destdir/.wadf-instance");
