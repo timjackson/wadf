@@ -1252,17 +1252,20 @@ class Tools_WADF {
 		if ($local_pear_package_dirs && !$local_pear_package_dirs != '@dep_pear_local_package_dirs@') {
 			$package_dirs = explode(',', $local_pear_package_dirs);
 			foreach ($package_dirs as $package_dir) {
-				$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($package_dir);
-				$this->_debugOutput("Looking for local PEAR packages in $dir_to_check...", self::DEBUG_INFORMATION);
-				$files = self::listAllFiles($dir_to_check);
-				foreach ($files as $file) {
-					$basename = basename($file);
-					if ($basename == 'package.xml' || $basename == 'package2.xml') {
-						if (!in_array($file, $local_pear_packages_to_install)) {
-							$this->_debugOutput("Marking $file as a PEAR package to install...", self::DEBUG_INFORMATION);
-							$local_pear_packages_to_install[] = $file;
-						} else {
-							$this->_debugOutput("Not marking $file as a PEAR package to install; already listed...", self::DEBUG_INFORMATION);
+				$package_dir = trim($package_dir);
+				if (!empty($package_dir)) {
+					$dir_to_check = $dir . DIRECTORY_SEPARATOR . trim($package_dir);
+					$this->_debugOutput("Looking for local PEAR packages in $dir_to_check...", self::DEBUG_INFORMATION);
+					$files = self::listAllFiles($dir_to_check);
+					foreach ($files as $file) {
+						$basename = basename($file);
+						if ($basename == 'package.xml' || $basename == 'package2.xml') {
+							if (!in_array($file, $local_pear_packages_to_install)) {
+								$this->_debugOutput("Marking $file as a PEAR package to install...", self::DEBUG_INFORMATION);
+								$local_pear_packages_to_install[] = $file;
+							} else {
+								$this->_debugOutput("Not marking $file as a PEAR package to install; already listed...", self::DEBUG_INFORMATION);
+							}
 						}
 					}
 				}
