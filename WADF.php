@@ -1302,8 +1302,13 @@ class Tools_WADF {
 				// we do this on every iteration in case a previous install has
 				// changed the list
 				$pkgs = $this->_getInstalledPearPackages();
+				$pkgvers = array();
+				foreach ($pkgs as $name => $ver)
+				{
+					$pkgvers[] = $name . '-' . $ver;
+				}
 				// dep->name includes the channel name
-				if (!in_array($pkg_to_install, $pkgs)) {
+				if (!in_array($pkg_to_install, $pkgvers)) {
 					$final_list_of_deps_to_force_install[] = $pkg_to_install;
 				}
 			}
@@ -1348,10 +1353,12 @@ class Tools_WADF {
 		foreach ($installed as $channel => $packages) {
 			foreach ($packages as $package) {
 				if ($package['xsdversion'] >= 2) {
-					$packagelist[] = $package['channel'] . '/' . $package['name'] . '-' . $package['version']['release'];
+					$pkgname = $package['channel'] . '/' . $package['name'];
+					$packagelist[$pkgname] = $package['version']['release'];
 				} else {
 					// old package.xml v1
-					$packagelist[] = "pear.php.net/" . $package['package'] . '-' . $package['version'];
+					$pkgname = "pear.php.net/" . $package['package'];
+					$packagelist[$pkgname] = $package['version'];
 				}
 			}
 		}
@@ -1600,8 +1607,15 @@ class Tools_WADF {
 					// (<max> does not completely exclude dep versions from consideration)
 					$ver_picked = $vers[0];
 					$this->_debugOutput("\tWARNING: Multiple PEAR dependencies on a specific version of $pkg (" . implode(', ', $vers) . ") - probable cause is PEAR bug #13425", self::DEBUG_WARNING);
-					$this->_debugOutput("\tForce-installing $pkg-$ver_picked", self::DEBUG_WARNING);
-					$this->_runPEAR("install -f $pkg-$ver_picked", true, true, true);
+					
+					// Make sure we don't downgrade an existing installed package, or this can cause loops
+					$installed_ver = $this->_getInstalledPearPkgVersion($pkg);
+					if (!$installed_ver || version_compare($ver_picked, $installed_ver, '>')) {
+						$this->_debugOutput("\tForce-installing $pkg-$ver_picked", self::DEBUG_WARNING);
+						$this->_runPEAR("install -f $pkg-$ver_picked", true, true, true);
+					} else {
+						$this->_debugOutput("\tNot installing $pkg-$ver_picked; $pkg-$installed_ver is already installed");
+					}
 				}
 				$this->_debugOutput("\tRe-running PEAR deployment with newly-installed dependencies...", self::DEBUG_GENERAL);
 				$ret = $this->_runPEAR($cmd, $output, $fail_on_error, true);
@@ -1623,6 +1637,18 @@ class Tools_WADF {
 			exit;
 		}
 		return $ret;
+	}
+	
+	/**
+	 * @param $pkg Package name, including a channel prefix
+	 */
+	protected function _getInstalledPearPkgVersion($pkg)
+	{
+		$pkglist = $this->_getInstalledPearPackages();
+		if (isset($pkglist[$pkg])) {
+			return $pkglist[$pkg];
+		}
+		return false;
 	}
 	
 	protected function _getPEARCmd()
