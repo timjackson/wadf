@@ -164,8 +164,8 @@ class Tools_WADF {
 	
 	protected function _setInternalMacros()
 	{
-		if (isset($_ENV['HOSTNAME'])) {
-			$macros['hostname'] = $_ENV['HOSTNAME'];
+		if (!empty(getenv('HOSTNAME'))) {
+			$macros['hostname'] = getenv('HOSTNAME');
 		} else {
 			// TODO there is presumably a better way of doing this
 			$macros['hostname'] = gethostbyaddr('127.0.0.1');
@@ -177,8 +177,8 @@ class Tools_WADF {
 		} else {
 			$macros['user'] = 'UNKNOWN';
 		}
-		if (isset($_ENV['HOME'])) {
-			$macros['home'] = $_ENV['HOME'];
+		if (!empty(getenv('HOME'))) {
+			$macros['home'] = getenv('HOME');
 		}
 		$this->_appendMacroDefs($macros);
 	}
@@ -2037,8 +2037,8 @@ class Tools_WADF {
 		$this->readConfigFile($this->_options['master_config'], $profile_override);
 		
 		// Read per-user config
-		if (isset($_ENV['HOME'])) {
-			$wadfrc = $_ENV['HOME'].'/.wadf/config';
+		if (!empty(getenv('HOME'))) {
+			$wadfrc = getenv('HOME') . '/.wadf/config';
 			if (file_exists($wadfrc)) {
 				$this->readConfigFile($wadfrc, $profile_override);
 			}

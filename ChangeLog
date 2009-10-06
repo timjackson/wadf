@@ -5,6 +5,7 @@ Changes/improvements:
 - #265: Output from post deploy script should be marked more clearly
 - #266: Improve output when deploying PHP CGI config
 - #200: Abstract version control-specific details
+- #280: Don't rely on on $_ENV; use getenv() instead
 
 Bugs fixed:
 - #268: Issues with versions of SVN less than 1.5

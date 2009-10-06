@@ -25,7 +25,7 @@ require_once 'Console/Getopt.php'; // this is from PEAR
 
 set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
 
-$WADF_HOME = $_ENV['HOME'] . '/.wadf';
+$WADF_HOME = getenv('HOME') . '/.wadf';
 
 $httpd='/usr/sbin/httpd';
 
