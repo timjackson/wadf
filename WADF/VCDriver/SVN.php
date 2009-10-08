@@ -43,10 +43,10 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	public function checkout($revtype, $rev_translated, $raw_rev, $dest_path)
 	{
 		$svn_path = $this->_getSVNPath($revtype, $rev_translated);
-		if ($raw_rev !== null && $raw_rev != 'HEAD') {
+		if ($revtype == Tools_WADF::VCREFTYPE_TAG && ($raw_rev !== null && $raw_rev != 'HEAD')) {
 			throw new Exception("Don't pass a raw revision when checking out a tag");
 		}
-		if ($raw_rev === null) $svn_path .= "@$raw_rev";
+		if ($raw_rev !== null) $svn_path .= "@$raw_rev";
 		$this->_runSVN("checkout $svn_path $dest_path");
 	}
 	
@@ -58,19 +58,44 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	public function switchVer($revtype, $rev_translated, $raw_rev, $dest_path)
 	{
 		$cwd = getcwd();
-		chdir($dest_path);
 		$src_path = $this->_getSVNPath($revtype, $rev_translated);
-		$this->_runSVN("switch $raw_rev $src_path");
-		$this->_runSVN("up -r $raw_rev");
-		chdir($cwd);
+		$this->switchVerFromPath($src_path, $raw_rev, $det_path);
 	}
 	
 	public function switchVerFromPath($src_path, $raw_rev, $dest_path)
 	{
 		$cwd = getcwd();
 		chdir($dest_path);
-		$this->_runSVN("switch $src_path");
-		$this->_runSVN("up -r $raw_rev");
+
+		$info = $this->readVCInfoFromDir($dest_path);
+		if ($info->url == $src_path) {
+			$this->_runSVN("up -r  $raw_rev");
+		} else {
+			$ver = $this->_getSVNVer();
+			if (version_compare($ver, '1.4.0', '>=')) {
+				// most reliable as we can use peg revisions
+				$this->_runSVN("switch $src_path@$raw_rev $src_path");
+			} else {
+				// do the best we can without peg revisions
+
+				// try to switch with -r
+				$out = $this->_runSVN("switch -r $raw_rev $src_path", false);
+				if ($out != 0) {
+					// switching with -r didn't work
+					chdir($cwd);
+					$bak_dir = $dest_path . '.bak';
+					if (file_exists($bak_dir)) {
+						throw new Exception("Tried to deploy SVN dependency $src_path@$raw_rev by doing a fresh checkout to $dest_path, but can't back up to $bak_dir as this directory already exists");
+					} else {
+						rename($dest_path, $bak_dir);
+						$this->checkoutFromPath($src_path, $raw_rev, $dest_path);
+					}
+				} else {
+					// TODO some output here, but we don't have access to WADF's _debugOutput() method
+				}
+			}
+		}
+
 		chdir($cwd);
 	}
 	
@@ -189,6 +214,16 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 		$svn_full_path = $this->_svnroot . '/' . $this->_appref . '/' . $svn_path;
 		
 		return $svn_full_path;
+	}
+
+	protected function _getSVNVer()
+	{
+		exec("svn --version", $out, $ret);
+		if ($out == 0 && preg_match('svn, version (\S)\s/', $out[0], $matches)) {
+			return $matches[1];
+		} else {
+			throw new Exception('Could not determine SVN version');
+		}
 	}
 
 }
