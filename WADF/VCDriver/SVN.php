@@ -59,7 +59,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	{
 		$cwd = getcwd();
 		$src_path = $this->_getSVNPath($revtype, $rev_translated);
-		$this->switchVerFromPath($src_path, $raw_rev, $det_path);
+		$this->switchVerFromPath($src_path, $raw_rev, $dest_path);
 	}
 	
 	public function switchVerFromPath($src_path, $raw_rev, $dest_path)
@@ -68,6 +68,11 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 		chdir($dest_path);
 
 		$info = $this->readVCInfoFromDir($dest_path);
+
+		if ($info === false) {
+			throw new Exception("Tried to switch the version of a non-working copy ($dest_path)");
+		}
+
 		if ($info->url == $src_path) {
 			$this->_runSVN("up -r  $raw_rev");
 		} else {
@@ -151,7 +156,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 			return false;
 		}
 		
-		if (preg_match('|/trunk$|', $info->url)) {
+		if (preg_match('|/trunk/|', $info->url) || preg_match('|/trunk$|', $info->url)) {
 			$info->rev_type = Tools_WADF::VCREFTYPE_TRUNK;
 		} else if (preg_match('|/tags/([^/]+)$|', $info->url, $matches)) {
 			$info->rev_type = Tools_WADF::VCREFTYPE_TAG;
