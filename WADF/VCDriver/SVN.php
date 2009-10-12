@@ -224,10 +224,10 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 	protected function _getSVNVer()
 	{
 		exec("svn --version", $out, $ret);
-		if ($out == 0 && preg_match('svn, version (\S)\s/', $out[0], $matches)) {
+		if ($ret == 0 && preg_match('/svn, version (\S+)\s/i', $out[0], $matches)) {
 			return $matches[1];
 		} else {
-			throw new Exception('Could not determine SVN version');
+			throw new Exception("Could not determine SVN version from 'svn --version'; return code was $ret, output was " . $out[0]);
 		}
 	}
 
