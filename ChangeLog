@@ -19,8 +19,8 @@ Changes/improvements:
 
 Bugs fixed:
 - #268: Issues with versions of SVN less than 1.5
-- #269: With certain values of dep_pear_local_package_dirs, checkouts anywhere in
-  the deployed site can be installed
+- #269: With certain values of dep_pear_local_package_dirs, checkouts anywhere
+  in the deployed site can be installed
 
 #######################################################################
 # v0.13.1 (2009-09-13)
