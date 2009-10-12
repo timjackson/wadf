@@ -16,6 +16,8 @@ Changes/improvements:
 - #280: Don't rely on on $_ENV; use getenv() instead
 - #281: Switching of local SVN checkouts fails if existing working copy is a
   subdirectory of trunk
+- Strip leading slashes from dependency tag destinations: they are always 
+  relative to site root
 
 Bugs fixed:
 - #268: Issues with versions of SVN less than 1.5

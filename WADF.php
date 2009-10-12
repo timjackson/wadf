@@ -1401,6 +1401,10 @@ class Tools_WADF {
 										$dep->name = $svnmatches[1];
 										$dep->version = $svnmatches[2];
 										$dep->metadata = $parts[1];
+										// Strip leading slashes; dep tags are always relative to the site root
+										if ($dep->metadata{0} == '/') {
+											$dep->metadata = substr($dep->metadata, 1);
+										}
 									} else {
 										$this->_debugOutput("Unknown SVN dependency syntax in '$parts[0]'", self::DEBUG_WARNING);
 									}
