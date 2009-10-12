@@ -79,7 +79,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 			$ver = $this->_getSVNVer();
 			if (version_compare($ver, '1.4.0', '>=')) {
 				// most reliable as we can use peg revisions
-				$this->_runSVN("switch $src_path@$raw_rev $src_path");
+				$this->_runSVN("switch $src_path@$raw_rev");
 			} else {
 				// do the best we can without peg revisions
 
