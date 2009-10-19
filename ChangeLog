@@ -1,5 +1,5 @@
 #######################################################################
-# v0.13.2 (unreleased)
+# v0.13.2 (2009-10-19)
 #######################################################################
 Fix some regressions with support for older versions of SVN, and some more
 tweaks to the deployment process for local PEAR packages (e.g. checkouts of
