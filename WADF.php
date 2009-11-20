@@ -172,11 +172,22 @@ class Tools_WADF {
 			$macros['hostname'] = gethostbyaddr('127.0.0.1');
 		}
 		$macros['cwd'] = getcwd();
-		if (function_exists('posix_getuid')) {
-			$details = posix_getpwuid(posix_getuid());
-			$macros['user'] = $details['name'];
-		} else {
-			$macros['user'] = 'UNKNOWN';
+		$user_env_vars = array('USER', 'USERNAME', 'LOGNAME');
+		foreach ($user_env_vars as $var) {
+			if (!isset($macros['user'])) {
+				$user = getenv($var);
+				if (!empty($user)) {
+					$macros['user'] = $user;
+				}
+			}
+		}
+		if (!isset($macros['user'])) {
+			if (function_exists('posix_getuid')) {
+				$details = posix_getpwuid(posix_getuid());
+				$macros['user'] = $details['name'];
+			} else {
+				$macros['user'] = 'UNKNOWN';
+			}
 		}
 		$home = getenv('HOME');
 		if (!empty($home)) {
