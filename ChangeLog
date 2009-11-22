@@ -1,6 +1,10 @@
 #######################################################################
 # v0.13.3 (unreleased)
 #######################################################################
+New features:
+- #294: Support alternate hosts file format that doesn't duplicate the local 
+  host name (useful for Mac OS X)
+
 Changes/improvements:
 - #298: Look at environment variables to fill @user@ macro where possible
 - #295: Default for vhost_config_path is more environment-specific than necessary 

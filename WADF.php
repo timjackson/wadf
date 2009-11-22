@@ -604,8 +604,22 @@ class Tools_WADF {
 			$line_num++;
 		}
 		foreach ($hosts as $host) {
+			$hosts_file_format = $this->resolveMacro('deploy_dns_hosts_file_format');
+			if (!$hosts_file_format || $hosts_file_format == '@deploy_dns_hosts_file_format@') {
+				$hosts_file_format = 1;
+			}
 			if (!in_array($host, $existing_hostnames)) {
-				array_splice($file_contents, $localhost_line_num + 1, 0, "$deploy_ip\t$base_host\t$host\n");
+				switch ($hosts_file_format) {
+					case 1:
+						array_splice($file_contents, $localhost_line_num + 1, 0, "$deploy_ip\t$base_host\t$host\n");
+						break;
+					case 2:
+						array_splice($file_contents, $localhost_line_num + 1, 0, "$deploy_ip\t$host\n");
+						break;
+					default:
+						throw new Exception("Unknown value '$hosts_file_format' for deploy_dns_hosts_file_format option");
+				}
+				
 			}
 		}
 		$fp = @fopen($hosts_file, 'w');
