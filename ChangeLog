@@ -8,7 +8,8 @@ New features:
 Changes/improvements:
 - #298: Look at environment variables to fill @user@ macro where possible
 - #301: Remove hardcoded path to /usr/bin/php
-- #295: Default for vhost_config_path is more environment-specific than necessary 
+- #295: Default for vhost_config_path is more environment-specific than necessary
+- #302: Auto-create directories for vhost_config_path
 
 #######################################################################
 # v0.13.2 (2009-10-19)

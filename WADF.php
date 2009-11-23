@@ -17,6 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'System.php';
+
 /**
  * Main WADF class
  */
@@ -669,7 +671,12 @@ class Tools_WADF {
 		}
 		
 		$this->_debugOutput("Deploying webserver configuration...", self::DEBUG_GENERAL);
-		$dest_file = $this->resolveMacro('vhost_config_path').'/'.$this->resolveMacro('instance').'.conf';
+		$vhost_config_path = $this->resolveMacro('vhost_config_path');
+		if (!file_exists($vhost_config_path)) {
+			$this->_debugOutput("Creating webserver config file path $vhost_config_path...", self::DEBUG_GENERAL);
+			System::mkdir(array('-p', $vhost_config_path));
+		}
+		$dest_file = $vhost_config_path . '/' . $this->resolveMacro('instance') . '.conf';
 		$this->_debugOutput("Copying $source_file to $dest_file", self::DEBUG_VERBOSE);
 		
 		$config = file_get_contents($source_file);
