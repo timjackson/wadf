@@ -125,8 +125,6 @@ e.g.
 <VirtualHost @vhost1_interface@>
 	ServerName @vhost1_name@
 	DocumentRoot @deploy_path@/webroot
-	# php_dir will contain the dependencies pulled in via PEAR
-	php_value include_path .:@deploy_path@/include:@php_dir@
 	RewriteEngine on
 	RewriteRule /.* @deploy_path@/application/bootstrap_http.php
 </VirtualHost>
@@ -175,6 +173,12 @@ However, for PHP running as a CGI, the directives are usually stored in a separa
 WADF is aware of both types of PHP configuration and explicitly supports them via the "php_type" configuration parameter. In either case, it expects to find a file called "php.ini" in the root of the site (this will normally be pre-templated as php.ini.template). Then, when deploying a site, WADF inserts PHP directives in the appropriate place.
 - If "php_type" is set to "mod_php", then it converts the directives to Apache config style and inserts them in the VirtualHost. It also converts comments from the php.ini "; comment" format to the Apache "# comment" format. 
 - If "php_type" is set to "cgi:/path/to/file" then it simply copies the ini file to "/path/to/file" ready to be used by the CGI interpreter.
+
+Example php.ini:
+
+	engine on
+	# when processed, 'php_dir' will be the path to the PEAR installation
+	include_path = .:@deploy_path@/include:@php_dir@
 
 No matter whether you are running PHP as mod_php or CGI, you can also set additional PHP options on a per-profile basis. By setting the "php_config_location_extra" parameter to point to a php.ini file, the options from this ini file will be appended to the rest of the PHP options from the normal application PHP config. This can be useful, for example, to force "display_errors" to always be turned on for a development machine.
 
