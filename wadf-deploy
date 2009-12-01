@@ -32,6 +32,7 @@ $options = $con->getopt2($args, 'r:d:vV', array('no-db'));
 
 $usage_text = "Usage: wadf-deploy [<option> [<option> ...]] <appref> [version]
 Options:
+  -d   <macro name>=<macro value>: a macro override
   -r   Specify specific version control revision to deploy; defaults to HEAD.
        Not valid for use in conjunction with deployment of a specific tag (see
        'version' details below)

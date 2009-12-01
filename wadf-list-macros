@@ -94,7 +94,7 @@ foreach (Tools_WADF::listTemplateFiles($dir) as $file) {
 	print ' - ' . str_replace($dir . '/', '', $file) . "\n";
 }
 
-print "\nMacros defined:\n";
+print "\nMacros defined and used in this deployment:\n";
 
 $max_length = 0;
 foreach ($macros as $name => $value) {
