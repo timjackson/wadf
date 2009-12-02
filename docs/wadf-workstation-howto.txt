@@ -6,7 +6,7 @@ Tim Jackson (tim@timj.co.uk)
 
 http://www.timj.co.uk/computing/software/wadf/
 =========================================================================
-Revised: 12 June 2008
+Revised: 22 Nov 2009
 
 This document shows how to set up WADF on a workstation to deploy "end" applications (e.g. customer applications).
 For the purposes of illustration It makes a few assumptions:
@@ -86,7 +86,7 @@ PEAR 1.7.x setup
 
 1. Make sure you have PEAR 1.7.1+ (WADF needs it, and also 1.6.2+ fixes bug #11642).
 
-2. PEAR 1.7.0+ has some new config options, cfg_dir and www_dir. Set these:
+2. PEAR 1.7.0+ has some new config options, cfg_dir and www_dir. If the system-installed PEAR that you bootstrapped from is version < 1.7.0 then you will need to set these:
 
 pear config-set cfg_dir [pearpath]/cfg
 pear config-set www_dir [pearpath]/www
@@ -151,7 +151,7 @@ MySQL setup
 =======================================================
 1. Check you have a local MySQL server running (ask your system administrator) and get the root password.
 
-2. If using Fedora 6 or less, log into MySQL as root and do:
+2. To avoid MySQL permission problems, log into MySQL as root and do:
 
 USE mysql;
 DELETE FROM user WHERE user='';
