@@ -184,8 +184,5 @@ Configured for the following applications:
 
 The Apache HTTPD error logs will be in ~/.wadf/httpd.error_log if you need them.
 
-When it's deployed you may (or may not) need to run one or more command line scripts (e.g. setup.php, cmdline/index_dispatchers or similar) manually.
-
 4. Read [pearpath]/docs/Tools_WADF/wadf.txt.
 
-You may or may not need to set up per-INSTANCE settings (e.g. override include paths) in .wadf-instance. After making changes to template files in the app, run "wadf-reprocess".
