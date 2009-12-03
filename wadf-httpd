@@ -247,13 +247,19 @@ function list_vhosts($show_instance_info=null)
 		}
 	}
 	
+	$host = getenv('HOSTNAME');
+	if (!empty($host)) {
+		$title = "WADF HTTP server on $host";
+	} else {
+		$title = "WADF HTTP server";
+	}
 	$html_out = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
 	<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
-	<head><title>WADF HTTP server</title>
+	<head><title>$title</title>
 	<style type='text/css'>body { font-family: sans-serif; }
 	th,td { vertical-align: top; border: 1px solid black; padding: 0.5em; font-size: 85%; }
 	table { border-collapse: collapse; }
-	</style></head><body><h1>WADF HTTP server</h1><h2>Listening on port $port and configured for the following applications:</h2>\n";
+	</style></head><body><h1>$title</h1><h2>Listening on port $port and configured for the following applications:</h2>\n";
 	if (count($vhosts) > 0) {
 		$html_out .= "<table><tr><th>Application reference</th><th>Filesystem path</th><th>Version</th><th>Virtual hosts</th></tr>\n";
 		foreach ($vhosts as $appname => $details) {

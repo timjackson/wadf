@@ -10,6 +10,7 @@ Changes/improvements:
 - #301: Remove hardcoded path to /usr/bin/php
 - #295: Default for vhost_config_path is more environment-specific than necessary
 - #302: Auto-create directories for vhost_config_path
+- #309: Show hostname in WADF HTTP server default index page 
 - Minor improvements to command line help
 
 #######################################################################
