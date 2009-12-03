@@ -334,39 +334,39 @@ class Tools_WADF {
 					}
 				}
 				$this->_debugOutput("Setting up database $name on host $host...", self::DEBUG_GENERAL);
-				if (!empty($schema)) {
-					$schema_path = "$dir/$schema";
-					if (file_exists($schema_path)) {
-						// FIXME quote strings!
-						$db_deploy_user = $this->resolveMacro("db${num}_deploy_user");
-						$db_deploy_pass = $this->resolveMacro("db${num}_deploy_pass");
+				// FIXME quote strings!
+				$db_deploy_user = $this->resolveMacro("db${num}_deploy_user");
+				$db_deploy_pass = $this->resolveMacro("db${num}_deploy_pass");
+			
+				$db = @mysql_connect($host, $db_deploy_user, $db_deploy_pass);
+				if (!is_resource($db)) {
+					throw new Exception("Could not connect to database (username=$db_deploy_user, password=$db_deploy_pass): ".mysql_error());
+				}
+			
+				if (in_array('create', $deploy_options)) {
+					mysql_query("CREATE DATABASE IF NOT EXISTS $name", $db);
+				}
+				if (in_array('grant', $deploy_options)) {
+					mysql_query("GRANT ALL on $name.* to $user IDENTIFIED BY '$pass'", $db);
+				}
+				if (in_array('schema', $deploy_options)) {
+					// Remove existing database tables
+					$this->_removeDatabaseTables($name, $db);
 					
-						$db = @mysql_connect($host, $db_deploy_user, $db_deploy_pass);
-						if (!is_resource($db)) {
-							throw new Exception("Could not connect to database (username=$db_deploy_user, password=$db_deploy_pass): ".mysql_error());
-						}
-					
-						if (in_array('create', $deploy_options)) {
-							mysql_query("CREATE DATABASE IF NOT EXISTS $name", $db);
-						}
-						if (in_array('grant', $deploy_options)) {
-							mysql_query("GRANT ALL on $name.* to $user IDENTIFIED BY '$pass'", $db);
-						}
-						if (in_array('schema', $deploy_options)) {
-							// Remove existing database tables
-							$this->_removeDatabaseTables($name, $db);
-						
-							// Deploy new schema
+					// Deploy schema file if necessary
+					if (!empty($schema)) {
+						$schema_path = "$dir/$schema";
+						if (file_exists($schema_path)) {
 							$this->_debugOutput("\tDeploying new schema for database $name as user $db_deploy_user...", self::DEBUG_GENERAL);
 							$cmd = "mysql $name -h $host -u $db_deploy_user ".(($db_deploy_pass != null) ? "-p$db_deploy_pass" : '')." < $dir/$schema 2>&1";
+							mysql_close($db);
+							exec($cmd, $out, $ret);
+							if ($ret != 0) {
+								throw new Exception('Error when deploying schema: ' . implode("\n", $out));
+							}
+						} else {
+							$this->_debugOutput("No schema file found to deploy at $schema_path", self::DEBUG_GENERAL);
 						}
-						mysql_close($db);
-						exec($cmd, $out, $ret);
-						if ($ret != 0) {
-							throw new Exception('Error when deploying schema: ' . implode("\n", $out));
-						}
-					} else {
-						throw new Exception("Schema file $schema_path not found");
 					}
 				}
 			}

@@ -13,6 +13,9 @@ Changes/improvements:
 - #309: Show hostname in WADF HTTP server default index page 
 - Minor improvements to command line help
 
+Bugs fixed:
+- #297: "wadf-reprocess --db" only works if there is a schema file 
+
 #######################################################################
 # v0.13.2 (2009-10-19)
 #######################################################################
