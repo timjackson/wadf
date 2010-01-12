@@ -11,8 +11,9 @@ Changes/improvements:
 - #295: [Core] Default for vhost_config_path is more environment-specific than necessary
 - #302: [Core] Auto-create directories for vhost_config_path
 - #309: [Micro HTTP server] Show hostname in WADF HTTP server default index page 
-- Minor improvements to command line help
 - #315: [Core] Change the ordering of wadf-(reprocess/deploy) so that installing the crontab is the last operation
+- #303: [Core] Replace _rmDir() function with call to System::rm() 
+- [CLI] Minor improvements to command line help
 
 Bugs fixed:
 - #297: [CLI] "wadf-reprocess --db" only works if there is a schema file 

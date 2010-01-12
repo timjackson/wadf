@@ -1819,23 +1819,12 @@ class Tools_WADF {
 	 * 
 	 * @param string $dir Path to directory, without trailing slash
 	 */
-	protected static function _rmDir($dir)
+	protected function _rmDir($dir)
 	{
-		if (is_dir($dir)) {
-			foreach(scandir($dir) as $dir_entry) {
-				if ($dir_entry == '..' || $dir_entry == '.') continue;
-				
-				// Make dir_entry an absolute path
-				$dir_entry = $dir . DIRECTORY_SEPARATOR . $dir_entry;
-
-				// Delete dir_entry
-				if (is_dir($dir_entry) && !is_link($dir_entry)) {
-					self::_rmDir($dir_entry);
-			    } else {
-					unlink($dir_entry);
-			    }
+		if (file_exists($dir) && is_dir($dir)) {
+			if (!System::rm(array('-r', $dir))) {
+				self::_debugOutput("Could not fully delete $dir", self::DEBUG_WARNING);
 			}
-			rmdir($dir);
 		}
 	}
 	
