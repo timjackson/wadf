@@ -246,10 +246,6 @@ if ($db_redeploy) {
 if ($template_processing) {
 	$wadf->deployVhost($dir);
 	$wadf->deployDNS();
-	$wadf->deployScheduledJobs();
-	$wadf->postDeploy();
-	$wadf->restartWebserver();
-	$wadf->cleanupFiles();
 }
 
 if ($kickstart_prompt) {
@@ -265,4 +261,10 @@ if ($kickstart_prompt) {
 			}
 		}
 	}
+}
+if ($template_processing) {
+	$wadf->deployScheduledJobs();
+	$wadf->postDeploy();
+	$wadf->cleanupFiles();
+	$wadf->restartWebserver();
 }

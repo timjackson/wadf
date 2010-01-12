@@ -239,8 +239,8 @@ class Tools_WADF {
 		}
 		$this->deployVhost();
 		$this->deployDNS();
-		$this->deployScheduledJobs();
 		$this->runKickstart($db_deploy);
+		$this->deployScheduledJobs();
 		$this->postDeploy();
 		$this->cleanupFiles();
 		$this->restartWebserver();
