@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.7.0RC2" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+<package version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
  <name>testapp</name>
- <!-- NB can't use __uri channel -->
- <channel>pear.timj.co.uk</channel>
+ <channel>__uri</channel>
  <summary>Test application</summary>
  <description>Test application</description>
   <lead>
@@ -12,7 +11,6 @@
    <active>yes</active>
   </lead>
  <date>2009-06-22</date>
- <time>14:00:00</time>
  <version>
   <release>1.0.0</release>
   <api>1.0.0</api>
@@ -21,32 +19,23 @@
   <release>stable</release>
   <api>stable</api>
  </stability>
- <license>XYZ</license>
- <notes>Example</notes>
+ <license>Whatever</license>
+ <notes>Whatever</notes>
  <contents>
   <dir baseinstalldir="/" name="/">
-   <file name="vhost-httpd.conf.template" role="application" />
+   <file name="vhost-httpd.conf.template" role="php" />
   </dir> <!-- / -->
  </contents>
  <dependencies>
   <required>
-   <php>
-    <min>5.1.6</min>
-   </php>
-   <pearinstaller>
-    <min>1.4.0</min>
-   </pearinstaller>
+   <php><min>5.1.6</min></php>
+   <pearinstaller><min>1.7.0</min></pearinstaller>
    <package>
-    <name>Net_Socket</name>
+    <name>HTTP_Request</name>
     <channel>pear.php.net</channel>
-    <max>1.0.9</max>
+    <min>1.4.4</min>
    </package>
   </required>
  </dependencies>
- <usesrole>
-  <role>application</role>
-  <package>Role_Application</package>
-  <channel>pear.timj.co.uk</channel>
- </usesrole>
- <phprelease />
+ <phprelease/>
 </package>
