@@ -2,7 +2,7 @@
 WADF - Web Application Deployment Framework
 (c)2006-2009 Tim Jackson (tim@timj.co.uk)
 
-User Guide for WADF 0.13.0
+User Guide for WADF 0.13.3
 =========================================================
 
 Introduction
@@ -388,9 +388,12 @@ For workstation-based development, controls the Apache HTTPD webserver running a
 The output of "wadf-httpd status" looks something like the following:
 
 *******************************************
-Configured for the following applications:
+WADF HTTPD instance is running (pid 1234)
+Listening on port 10080; configured for the following applications:
+
  someapp: (/path/to/someapp) ver=DEVTR:1234
    http://someapp.mypc.example.com:10080
+   
  otherapp: (/path/to/otherap) ver=DEVTR:4870
    http://otherapp.mypc.example.com:10080
 *******************************************
