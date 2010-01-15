@@ -769,11 +769,18 @@ class Tools_WADF {
 			$deploy_path = $this->resolveMacro('deploy_path');
 			$this->_debugOutput("Cleaning up special files...", self::DEBUG_INFORMATION);
 			foreach(explode(' ', $files) as $file) {
+				$force_remove = false;
 				$file = trim($file);
+				if ($file{0} == '+') { // force removal even if template doesn't exist
+					$file = substr($file, 1);
+					$force_remove = true;
+				}
 				chdir($deploy_path);
-				if (file_exists($file) && file_exists("$file.template")) {
-					$this->_debugOutput("  Removing $file", self::DEBUG_INFORMATION);
-					unlink($file);
+				if (file_exists($file)) {
+					if ($force_remove || file_exists("$file.template")) {
+						$this->_debugOutput("  Removing $file", self::DEBUG_INFORMATION);
+						unlink($file);
+					}
 				}
 			}
 		}	

@@ -4,6 +4,8 @@
 New features:
 - #294: [Core] Support alternate hosts file format that doesn't duplicate the local 
   host name (useful for Mac OS X)
+- #322: [Core] Add ability to force post-deploy removal of files, even if they 
+  weren't templated
 
 Changes/improvements:
 - #298: [Core] Look at environment variables to fill @user@ macro where possible
