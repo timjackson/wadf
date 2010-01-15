@@ -2445,7 +2445,9 @@ class Tools_WADF {
 			$changed = false;
 			foreach ($this->_macro_values as $macro_name => $macro_value) {
 				$this->_debugOutput("resolveAllMacros: resolving macro '$macro->name' ('$macro->value')", self::DEBUG_VERBOSE);
-				$this->_macro_values[$macro_name] = $this->resolveString($macro_value);
+				$tmp_stack = $this->_macro_values;
+				unset($tmp_stack[$macro_name]); // avoid recursive errors
+				$this->_macro_values[$macro_name] = $this->resolveString($macro_value, $tmp_stack);
 			
 				// If macro value has changed, we will need to iterate again
 				if ($this->_macro_values[$macro_name] != $macro_value) {
