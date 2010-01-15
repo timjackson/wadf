@@ -14,10 +14,11 @@ Changes/improvements:
 - #315: [Core] Change the ordering of wadf-(reprocess/deploy) so that installing the crontab is the last operation
 - #303: [Core] Replace _rmDir() function with call to System::rm() 
 - [CLI] Minor improvements to command line help
-- [Documentation] Update workstation HOWTO to include usage with Mac OS X/MAMP
+- #300: [Documentation] Update workstation HOWTO to include usage with Mac OS X/MAMP
 
 Bugs fixed:
-- #297: [CLI] "wadf-reprocess --db" only works if there is a schema file 
+- #297: [CLI] "wadf-reprocess --db" only works if there is a schema file
+- #321: [Core] Infinite recursion in self-referencing macros
 
 #######################################################################
 # v0.13.2 (2009-10-19)
