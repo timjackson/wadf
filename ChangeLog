@@ -2,21 +2,24 @@
 # v0.13.3 (unreleased)
 #######################################################################
 New features:
-- #294: [Core] Support alternate hosts file format that doesn't duplicate the local 
-  host name (useful for Mac OS X)
+- #294: [Core] Support alternate hosts file format that doesn't duplicate the 
+  local host name (useful for Mac OS X)
 - #322: [Core] Add ability to force post-deploy removal of files, even if they 
   weren't templated
 
 Changes/improvements:
 - #298: [Core] Look at environment variables to fill @user@ macro where possible
 - #301: [CLI] Remove hardcoded path to /usr/bin/php
-- #295: [Core] Default for vhost_config_path is more environment-specific than necessary
+- #295: [Core] Default for vhost_config_path is more environment-specific than 
+  necessary
 - #302: [Core] Auto-create directories for vhost_config_path
 - #309: [Micro HTTP server] Show hostname in WADF HTTP server default index page 
-- #315: [Core] Change the ordering of wadf-(reprocess/deploy) so that installing the crontab is the last operation
+- #315: [Core] Change the ordering of wadf-(reprocess/deploy) so that installing
+  the crontab is the last operation
 - #303: [Core] Replace _rmDir() function with call to System::rm() 
 - [CLI] Minor improvements to command line help
-- #300: [Documentation] Update workstation HOWTO to include usage with Mac OS X/MAMP
+- #300: [Documentation] Update workstation HOWTO to include usage with 
+  Mac OS X/MAMP
 
 Bugs fixed:
 - #297: [CLI] "wadf-reprocess --db" only works if there is a schema file
