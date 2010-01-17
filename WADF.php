@@ -768,6 +768,7 @@ class Tools_WADF {
 		if (!empty($files) && $files != '@post_deploy_cleanup_files@') {
 			$deploy_path = $this->resolveMacro('deploy_path');
 			$this->_debugOutput("Cleaning up special files...", self::DEBUG_INFORMATION);
+			$this->_debugOutput("Files to clean up are $files", self::DEBUG_VERBOSE);
 			foreach(explode(' ', $files) as $file) {
 				$force_remove = false;
 				$file = trim($file);
@@ -2444,7 +2445,16 @@ class Tools_WADF {
 		$changed = true;
 		
 		foreach ($this->_macro_defs as $macro) {
-			$this->_macro_values[$macro->name] = $macro->value;
+			$value = $macro->value;
+			if (isset($this->_macro_values[$macro->name])) { // if macro already has a value, check for recursion
+				$macros_within_macro = $this->extractMacrosFromString($value);
+				foreach ($macros_within_macro as $submacro) {
+					if ($submacro == $macro->name) { // recursive macro
+						$value = str_replace("@$submacro@", $this->_macro_values[$macro->name], $value);
+					}
+				}
+			}
+			$this->_macro_values[$macro->name] = $value;
 		}
 		
 		while ($changed) {
@@ -2452,9 +2462,7 @@ class Tools_WADF {
 			$changed = false;
 			foreach ($this->_macro_values as $macro_name => $macro_value) {
 				$this->_debugOutput("resolveAllMacros: resolving macro '$macro->name' ('$macro->value')", self::DEBUG_VERBOSE);
-				$tmp_stack = $this->_macro_values;
-				unset($tmp_stack[$macro_name]); // avoid recursive errors
-				$this->_macro_values[$macro_name] = $this->resolveString($macro_value, $tmp_stack);
+				$this->_macro_values[$macro_name] = $this->resolveString($macro_value);
 			
 				// If macro value has changed, we will need to iterate again
 				if ($this->_macro_values[$macro_name] != $macro_value) {
