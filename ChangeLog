@@ -8,6 +8,8 @@ New features:
   weren't templated
 
 Changes/improvements:
+- #320: [Core] When using mod_php the php.ini variables were set using
+  php_admin_*, preventing runtime overload
 - #298: [Core] Look at environment variables to fill @user@ macro where possible
 - #301: [CLI] Remove hardcoded path to /usr/bin/php
 - #295: [Core] Default for vhost_config_path is more environment-specific than 

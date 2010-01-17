@@ -806,6 +806,10 @@ class Tools_WADF {
 		if (file_exists($file)) {
 			$this->_debugOutput("\tProcessing PHP config file $file...", self::DEBUG_INFORMATION);
 			$php_ini_directives = file($file);
+			$php_ini_all = ini_get_all();
+			if (!isset($php_ini_all['engine'])) { // for some reason this isn't defined in at least PHP 5.2.12
+				$php_ini_all['engine'] = array('access' => INI_SYSTEM);
+			}
 			$directives_out = array();
 			foreach ($php_ini_directives as $directive) {
 				$directive = trim($directive);
@@ -814,14 +818,25 @@ class Tools_WADF {
 					// Comment; convert php.ini-style semicolons to hash signs
 					$directives_out[] = '#' . $matches[1];
 				} else if (preg_match('/^([a-z0-9_\.]+)\s*=\s*(.+)$/', $directive, $matches)) {
-					$directive_name = trim($matches[1]);
+					$directive_name = strtolower(trim($matches[1]));
 					$directive_value = trim($matches[2]);
 					
-					// See if it looks like a flag or a value
-					if (in_array(strtolower($directive_value), array('0','1','on','off'))) {
-						$directives_out[] = "php_admin_flag $directive_name $directive_value";
+					if (isset($php_ini_all[$directive_name])) {
+						$directive_type = 'value'; // flag or value
+						// See if it looks like a flag or a value
+						if (in_array(strtolower($directive_value), array('0','1','on','off'))) {
+							$directive_type = 'flag';
+						}
+						
+						if ($php_ini_all[$directive_name]['access'] & INI_ALL & INI_PERDIR) {
+							$prefix = 'php_';
+						} else {
+							$prefix = 'php_admin_';
+						}
+						$directives_out[] = $prefix . $directive_type . " $directive_name $directive_value";
 					} else {
-						$directives_out[] = "php_admin_value $directive_name $directive_value";
+						$directives_out[] = "# WADF: ignored unknown configuration option: $directive";
+						$this->_debugOutput("WARNING: Unknown PHP configuration option '$directive_name' in $file", self::DEBUG_WARNING);
 					}
 				} else {
 					$this->_debugOutput("WARNING: Could not parse PHP ini config line from $file:\n\t$directive", self::DEBUG_WARNING);
