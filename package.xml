@@ -10,10 +10,10 @@
   <email>tim@timj.co.uk</email>
   <active>yes</active>
  </lead>
- <date>2009-11-20</date>
+ <date>2010-01-17</date>
  <version>
-  <release>0.13.3a</release>
-  <api>0.13.3a</api>
+  <release>0.13.3RC3</release>
+  <api>0.13.3RC3</api>
  </version>
  <stability>
   <release>beta</release>
@@ -65,7 +65,7 @@
   	<dir name="docs">
 	  	<file name="Credits.txt" role="doc"/>
   		<file name="wadf.txt" role="doc"/>
-  		<file name="wadf-workstation-howto.txt" role="doc"/>
+  		<file name="WorkstationHOWTO.odt" role="doc"/>
   		<file name="Upgrading.txt" role="doc"/>
   	</dir>
   </dir>
