@@ -1,8 +1,8 @@
 =========================================================
 WADF - Web Application Deployment Framework
-(c)2006-2009 Tim Jackson (tim@timj.co.uk)
+(c)2006-2010 Tim Jackson (tim@timj.co.uk)
 
-User Guide for WADF 0.13.3
+User Guide for WADF 0.13.4
 =========================================================
 
 Introduction
@@ -158,6 +158,7 @@ SVN:http://svn.example.com/path/to/something@1234 somedir/path
 
 where 1234 is the revision number to check out and "somedir/path" is the path relative to the deployment root to check the working copy out to.
 When SVN dependencies are checked out, WADF looks to see if they appear to be PEAR packages (i.e. have a package.xml in their root). If so, it installs that into the main PEAR installation for the deployment.
+Deployment of SVN dependencies is more reliable if you use an SVN client version 1.5 or later, as WADF can use "peg" revisions to ensure it gets the exact version of the file specified in the dependency tags file.
 
 When reprocessing a site using wadf-reprocess, you can use the option "--no-dep-tags" to ignore the dependency tags file and use the "normal" dependency mechanism.
 
