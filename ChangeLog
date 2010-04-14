@@ -4,6 +4,8 @@
 Bugs fixed:
 - #344: Deployment of an SVN dependency still uses peg revision format in 
   SVN 1.4
+- #240: PHP config option values containing spaces aren't translated correctly
+  into Apache vhost php_* options
   
 Changes/improvements:
 - #325: wadf-list-macros highlights template files which are ignored 

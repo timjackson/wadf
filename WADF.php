@@ -828,6 +828,10 @@ class Tools_WADF {
 						// See if it looks like a flag or a value
 						if (in_array(strtolower($directive_value), array('0','1','on','off'))) {
 							$directive_type = 'flag';
+						} else {
+							if (strpos($directive_value, ' ') && $directive_value{0} != '"') {
+								$directive_value = '"' . $directive_value . '"';
+							}
 						}
 						
 						if ($php_ini_all[$directive_name]['access'] & INI_ALL & INI_PERDIR) {
