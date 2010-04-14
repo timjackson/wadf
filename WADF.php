@@ -1856,6 +1856,39 @@ class Tools_WADF {
 	public function processTemplatesInDir($dir)
 	{
 		$files = $this->listTemplateFiles($dir);
+		$files_filtered = self::filterTemplateFileListAgainstExcluded($dir, $files);
+		
+		foreach ($files_filtered as $file) {
+			// Process template file
+			$content = file_get_contents($file);
+			$content = $this->resolveString($content, null, "file:$file");
+			$output_file = preg_replace('/^(.+)\.template$/','\1',$file);
+			$source_permissions = fileperms($file);
+			if (file_exists($output_file)) {
+				// make sure it's writeable
+				chmod($output_file, 0600);
+			}
+			$fout_fh = fopen($output_file, 'w+');
+			fputs($fout_fh, $content);
+			fclose($fout_fh);
+			chmod($output_file, $source_permissions);
+			$writeable = $this->resolveMacro('generated_files_writeable');
+			if ($writeable == false) {
+				$non_writeable_permissions = $source_permissions & octdec('100555');
+				chmod($output_file, $non_writeable_permissions);
+			}
+		}
+	}
+	
+	/**
+	 * Take a list of template files and filter them against the template_exclude_paths option
+	 * 
+	 * @param array $dir  Base directory from which list of template files comes
+	 * @param array $files Array of filenames
+	 * @return array Array of filenames, containing only those NOT excluded by template_exclude_paths
+	 */
+	public function filterTemplateFileListAgainstExcluded($dir, $files)
+	{
 		$exclude_paths_macro = $this->resolveMacro('template_exclude_paths');
 		$exclude_paths = array();
 		if (!empty($exclude_paths_macro) && !$exclude_paths_macro != '@template_exclude_paths@') {
@@ -1880,26 +1913,7 @@ class Tools_WADF {
 				}
 			}
 		}
-		foreach ($files_filtered as $file) {
-			// Process template file
-			$content = file_get_contents($file);
-			$content = $this->resolveString($content, null, "file:$file");
-			$output_file = preg_replace('/^(.+)\.template$/','\1',$file);
-			$source_permissions = fileperms($file);
-			if (file_exists($output_file)) {
-				// make sure it's writeable
-				chmod($output_file, 0600);
-			}
-			$fout_fh = fopen($output_file, 'w+');
-			fputs($fout_fh, $content);
-			fclose($fout_fh);
-			chmod($output_file, $source_permissions);
-			$writeable = $this->resolveMacro('generated_files_writeable');
-			if ($writeable == false) {
-				$non_writeable_permissions = $source_permissions & octdec('100555');
-				chmod($output_file, $non_writeable_permissions);
-			}
-		}
+		return $files_filtered;
 	}
 	
 	public function resolveMacrosWithFallbacksInDir($dir, $deploy_database=false)

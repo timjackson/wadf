@@ -4,6 +4,9 @@
 Bugs fixed:
 - #344: Deployment of an SVN dependency still uses peg revision format in 
   SVN 1.4
+  
+Changes/improvements:
+- #325: wadf-list-macros highlights template files which are ignored 
 
 #######################################################################
 # v0.13.3 (2010-01-24)
