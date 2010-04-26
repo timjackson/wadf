@@ -1381,7 +1381,7 @@ class Tools_WADF {
 			if (count($final_list_of_deps_to_force_install) > 0) {
 				$list_of_deps = implode(' ', $final_list_of_deps_to_force_install);
 				$this->_debugOutput("Force-installing $list_of_deps", self::DEBUG_INFORMATION);
-				$this->_runPEAR('install --force --nodeps ' . $list_of_deps, true, false, false);
+				$this->_runPEAR('upgrade --force --nodeps ' . $list_of_deps, true, false, false);
 			}
 		}
 		
@@ -1682,7 +1682,7 @@ class Tools_WADF {
 					$installed_ver = $this->_getInstalledPearPkgVersion($pkg);
 					if (!$installed_ver || version_compare($ver_picked, $installed_ver, '>')) {
 						$this->_debugOutput("\tForce-installing $pkg-$ver_picked", self::DEBUG_WARNING);
-						$this->_runPEAR("install -f $pkg-$ver_picked", true, true, true);
+						$this->_runPEAR("upgrade -f $pkg-$ver_picked", true, true, true);
 					} else {
 						$this->_debugOutput("\tNot installing $pkg-$ver_picked; $pkg-$installed_ver is already installed");
 					}
@@ -1697,7 +1697,7 @@ class Tools_WADF {
 					$this->_debugOutput("\tWARNING: $pkg-" . $pkginfo['installed_ver'] . ' was installed, but ' . $pkginfo['dependent_app'] . ' requires version <= ' . $pkginfo['downgrade_to_ver'] . ' (possible cause: PEAR bug #13427)', self::DEBUG_WARNING);
 					$this->_debugOutput("\tAttempting to force-install $pkg-" . $pkginfo['downgrade_to_ver'] . ' to compensate', self::DEBUG_WARNING);
 					// Set fail to FALSE as we don't really care
-					$this->_runPEAR("install -f $pkg-" . $pkginfo['downgrade_to_ver'], true, false, true);
+					$this->_runPEAR("upgrade -f $pkg-" . $pkginfo['downgrade_to_ver'], true, false, true);
 				}
 			}
 		}
