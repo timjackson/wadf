@@ -6,6 +6,8 @@ Bugs fixed:
   SVN 1.4
 - #240: PHP config option values containing spaces aren't translated correctly
   into Apache vhost php_* options
+- #346: PEAR issue when installing with dep tags and there is a auto
+  resolved release confict, may add files from a future release 
   
 Changes/improvements:
 - #325: wadf-list-macros highlights template files which are ignored 
