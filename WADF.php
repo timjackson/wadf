@@ -1352,12 +1352,12 @@ class Tools_WADF {
 			$short_list_of_packages = implode(' ', $short_list_of_packages);
 			$this->_debugOutput("Installing local PEAR packages $short_list_of_packages...", self::DEBUG_GENERAL);
 			// First install without dependencies (saves some potential dependency problems)
-			$this->_runPEAR("install --nodeps --force $list_of_packages", false, false, false);
+			$this->_runPEAR("upgrade --nodeps --force $list_of_packages", false, false, false);
 			// Then install again, pulling in dependencies
 			// We enable PEAR bug workarounds here as they can just as well strike for local packages
 			// We install the packages individually to avoid the PEAR issue described in bug 271 (installing old versions from channel in favour of new ones from local pkgs)
 			foreach ($local_pear_packages_to_install as $pkg) {
-				$this->_runPEAR("install --onlyreqdeps -f $pkg", true, true, true);
+				$this->_runPEAR("upgrade --onlyreqdeps -f $pkg", true, true, true);
 			}
 		}
 		
