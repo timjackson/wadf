@@ -161,7 +161,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 		} else if (preg_match('|/tags/([^/]+)$|', $info->url, $matches)) {
 			$info->rev_type = Tools_WADF::VCREFTYPE_TAG;
 			$info->rev_translated = $matches[1];
-		} else if (preg_match('|/branches/([^/]+)$|', $info->url, $matches)) {
+		} else if (preg_match('|/branches/([^/]+)|', $info->url, $matches)) {
 			$info->rev_type = Tools_WADF::VCREFTYPE_BRANCH;
 			$info->rev_translated = $matches[1];
 		} else {
