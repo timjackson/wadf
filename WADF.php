@@ -1669,7 +1669,6 @@ class Tools_WADF {
 					}
 				}
 			}
-			$re_run_pear = false;
 			// workaround for PEAR bug #13425
 			if (in_array('bug13425', $workarounds) && count($duplicate_packages) > 0) {
 				foreach ($duplicate_packages as $pkg => $vers) {
