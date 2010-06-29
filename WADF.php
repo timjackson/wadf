@@ -1596,6 +1596,7 @@ class Tools_WADF {
 		}
 		
 		$this->_debugOutput("Running: $runcmd", self::DEBUG_INFORMATION);
+		$this->_debugOutput("Output: $output, fail on error: $fail_on_error, bug workarounds: $request_bug_workarounds", self::DEBUG_VERBOSE);
 
 		exec($runcmd, $exec_output, $ret);
 
@@ -1704,6 +1705,7 @@ class Tools_WADF {
 		
 		if($fail_on_error && $ret != 0) {
 			$this->_debugOutput("\t###### FAILED when installing PEAR dependencies", self::DEBUG_ERROR);
+			$this->_debugOutput("\tPEAR return code was $ret)", self::DEBUG_INFORMATION);
 			exit;
 		}
 		return $ret;
