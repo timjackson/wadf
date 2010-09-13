@@ -1,6 +1,9 @@
 #######################################################################
 # v0.13.6 (unreleased)
 #######################################################################
+New features:
+- #367: Add --dns-only option to wadf-reprocess
+
 Bugs fixed:
 - #355: Switching of local SVN checkouts fails if existing working copy is a
   subdirectory of a branch 

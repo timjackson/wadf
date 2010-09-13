@@ -37,7 +37,7 @@ $deploy_ver = null;
 $con = new Console_Getopt;
 $args = $con->readPHPArgv();
 array_shift($args);
-$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db', 'db-only', 'dep-tags', 'deps-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
+$options = $con->getopt2($args, 'vV', array('no-kickstart', 'db', 'db-only', 'dep-tags', 'deps-only', 'dns-only', 'no-db', 'no-deps', 'no-dep-tags', 'templates-only'));
 
 $usage_text = "Usage: wadf-reprocess [<option> [<option> ...]] <appref> [<version-to-deploy>]\n
 General options:
@@ -49,6 +49,7 @@ Options to modify what the reprocessing does:
   --db-only         Just redeploy the database; don't do anything else (implies --db)
   --dep-tags        Use a dependency tags file, if it exists
   --deps-only       Just install dependencies; don't do anything else
+  --dns-only        Just redeploy DNS; don't do anything else (implies --dns)
   --no-deps         Do not re-process dependencies
   --no-kickstart    Do not run kickstart script
   --templates-only  Only process templated files (implies --no-deps, --no-kickstart)\n";
@@ -89,6 +90,11 @@ foreach ($options[0] as $option) {
 			$db_deploy_prompt = false;
 			$template_processing = false;
 			break;
+		case '--dns-only':
+			$deploy_dns = true;
+			$kickstart_prompt = false;
+			$deploy_deps = false;
+			$template_processing = false;
 		case '--no-kickstart':
 			$kickstart_prompt = false;
 			break;
@@ -107,6 +113,10 @@ foreach ($options[0] as $option) {
 			$deploy_deps = false;
 			break;
 	}
+}
+
+if (!isset($deploy_dns)) {
+	$deploy_dns == $template_processing;
 }
 
 $instance_file_macros = array();
@@ -245,6 +255,9 @@ if ($db_redeploy) {
 }
 if ($template_processing) {
 	$wadf->deployVhost($dir);
+}
+
+if ($deploy_dns) {
 	$wadf->deployDNS();
 }
 
