@@ -116,7 +116,7 @@ foreach ($options[0] as $option) {
 }
 
 if (!isset($deploy_dns)) {
-	$deploy_dns == $template_processing;
+	$deploy_dns = $template_processing;
 }
 
 $instance_file_macros = array();
