@@ -2,7 +2,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2010 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -871,7 +871,11 @@ class Tools_WADF {
 					$extras = file_get_contents($php_ini_local);
 					$source .= "\n; PHP directives processed from $php_ini_local\n" . $extras;
 				}
-
+				$dest_dir = dirname($php_ini_dest);
+				if (!file_exists($dest_dir)) {
+					$this->_debugOutput("Creating directory $dest_dir for deployment of PHP config file...", self::DEBUG_GENERAL);
+					System::mkdir(array('-p', $dest_dir));
+				}
 				file_put_contents($php_ini_dest, $source);
 			}
 		} else {

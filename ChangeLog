@@ -3,6 +3,7 @@
 #######################################################################
 New features:
 - #367: Add --dns-only option to wadf-reprocess
+- #375: Automatically generate required directories when deploying CGI configs
 
 Bugs fixed:
 - #355: Switching of local SVN checkouts fails if existing working copy is a
