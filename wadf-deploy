@@ -46,7 +46,7 @@ application to be deployed.
 control system and can be in a number of formats:
  
   'trunk' (default) - Use version control trunk
-  'tag/XYZ'         - Use tag named \"XYZ\"
+  'tag/XYZ'         - Use tag named \"XYZ\". Use 'tag/LATEST' for newest tag.
   'branch/XYZ'      - Use branch named \"XYZ\"
 ";
 
