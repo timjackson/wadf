@@ -11,7 +11,7 @@ Bugs fixed:
 - #355: Switching of local SVN checkouts fails if existing working copy is a
   subdirectory of a branch 
 - #397: Incorrectly formatted dependency-tags file causes overwrite of the
-  client application
+  end-user application
 
 #######################################################################
 # v0.13.5 (2010-05-20)
