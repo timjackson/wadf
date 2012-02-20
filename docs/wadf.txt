@@ -1,8 +1,8 @@
 =========================================================
 WADF - Web Application Deployment Framework
-(c)2006-2010 Tim Jackson (tim@timj.co.uk)
+(c)2006-2012 Tim Jackson (tim@timj.co.uk)
 
-User Guide for WADF 0.13.4
+User Guide for WADF 0.13.6
 =========================================================
 
 Introduction
@@ -211,7 +211,10 @@ Kickstart (setup) script
 ------------------------
 Often, you want to run a "kickstart" script after initial deployment, to pre-populate a database with initial values or something similar (not necessarily involving a database). To support this, WADF has a "kickstart_script" option which, if set, executes the specified script after deployment.
 
-When running a kickstart script, WADF sets an environment variable "DEPLOY_INITDB" to indicate whether the database was re-deployed. It will be set to "1" if the database was re-deployed and "0" otherwise. This can be useful for the script to decide whether it needs to re-initialise values in a database or not.
+When running a kickstart script, WADF sets some environment variables which can be useful in the script:
+
+- "DEPLOY_INITDB" is to indicate whether the database was re-deployed. It will be set to "1" if the database was re-deployed and "0" otherwise. This can be useful for the script to decide whether it needs to re-initialise values in a database or not.
+- "DEPLOY_VERBOSITY" indicates the verbosity level of WADF's output, where increasing numbers mean an increasing level of verbosity. Currently this will usually be "0", but will be "1" if WADF was called with a "-v" option. In the future, higher numbers may be used to indicate increasing levels of verbosity.
 
 
 =========================================================

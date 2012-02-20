@@ -2,7 +2,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2010 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2012 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -755,6 +755,12 @@ class Tools_WADF {
 	{
 		$cmd = $this->resolveMacro('post_deploy_script');
 		if ($cmd != '@post_deploy_script@' && !empty($cmd)) {		
+			// Set environment variable to show verbosity level
+			if ($this->_debug >= self::DEBUG_INFORMATION) {
+				putenv('DEPLOY_VERBOSITY=1');
+			} else {
+				putenv('DEPLOY_VERBOSITY=0');
+			}
 			$this->_debugOutput("Running post-deploy script \"$cmd...\"", self::DEBUG_GENERAL);
 			$this->_debugOutput('---------- OUTPUT BELOW IS FROM POST DEPLOY SCRIPT, NOT WADF ----------', self::DEBUG_GENERAL);
 			passthru($cmd);
@@ -2065,6 +2071,12 @@ class Tools_WADF {
 					putenv('DEPLOY_INITDB=1');
 				} else {
 					putenv('DEPLOY_INITDB=0');
+				}
+				// Set environment variable to show verbosity level
+				if ($this->_debug >= self::DEBUG_INFORMATION) {
+					putenv('DEPLOY_VERBOSITY=1');
+				} else {
+					putenv('DEPLOY_VERBOSITY=0');
 				}
 				
 				$this->_debugOutput('----------- OUTPUT BELOW IS FROM KICKSTART SCRIPT, NOT WADF -----------', self::DEBUG_GENERAL);
