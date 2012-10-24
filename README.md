@@ -356,8 +356,8 @@ This does not automatically re-initialise the database or re-run the kickstart s
 
 Optionally, wadf-reprocess can be passed parameters to switch the working copy to a different version from the version control system. These take the following form:
 
-tag/XXX:    Use the version of the software identified with tag "XXX". "tag/LATEST" means use the most recent tag.
-branch/XXX: Use the HEAD of the branch called "XXX"
+tag/XXX:    Use the version of the software identified with tag "XXX". "tag/LATEST" means use the most recent tag.  
+branch/XXX: Use the HEAD of the branch called "XXX"  
 trunk:      Use the software trunk  
 
 Time-saving options:
@@ -416,9 +416,9 @@ The "ver=" output shows which version was deployed the last time that "wadf-repr
 =========================================================
 A version identifier is available to uniquely identify the version of the end-application (client application) checked out from the version control system. This is available in the 'deploy_version' macro during template processing. It is in the following format:
 
-Trunk:  DEVTR:[revision]
-Branch: DEVBR/[branch name]:[revision]
-Tag:    [tag name]
+Trunk:  DEVTR:[revision]  
+Branch: DEVBR/[branch name]:[revision]  
+Tag:    [tag name]  
 
 where "[revision]" is the revision number
 
@@ -445,7 +445,7 @@ Otherwise, "odd" stuff may happen with config variables.
 =========================================================
 11. FAQ
 =========================================================
-Q: What about SSL?
+Q: What about SSL?  
 A: SSL is a hosting-environment-specific (not application-specific) configuration so should either be done via an SSL terminator or via vhost_config_append in the 'live' profile
 
 Q: What about redirects (e.g. to force a certain page to redirect to a secure version) based on whether the site is being accessed over SSL?  
