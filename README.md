@@ -1,9 +1,8 @@
 =========================================================
 WADF - Web Application Deployment Framework
-(c)2006-2012 Tim Jackson (tim@timj.co.uk)
-
-User Guide for WADF 0.13.6
 =========================================================
+*(c)2006-2012 Tim Jackson (tim@timj.co.uk)*
+### User Guide for WADF 0.13.6
 
 Introduction
 ------------
@@ -33,26 +32,28 @@ It is tested on Fedora Linux, but should probably work OK on most Linuxes and pr
 It will not work on Windows at present.
 
 
+------
+
 =========================================================
-INSTALLING WADF
+1. INSTALLING WADF
 =========================================================
 WADF is available from the PEAR channel "pear.timj.co.uk" and it is recommended you install it using PEAR.
 
 First you will need to discover the channel, like so:
-
+```
 channel-discover pear.timj.co.uk
-
+```
 and then either download and install WADF directly from the network as such:
-
+```
 pear install timj/Tools_WADF
-
+```
 or install from a downloaded tarball like so:
-
+```
 pear install Tools_WADF-x.y.z.tgz
-
+```
 
 =========================================================
-BASIC WADF CONFIGURATION
+2. BASIC WADF CONFIGURATION
 =========================================================
 WADF is primarily a templating tool based on specifying "macros" which have values, possibly dependent on other macros and possibly overwritten by later declarations of the same macro. Read the heavily-commented wadf.conf for details, which sets up the "standard" macros, many of which are used internally by WADF for configuring its behaviour as described throughout this document. The intention is that a system-wide generic config file is used, which may then be overriden by, respectively:
 
@@ -63,22 +64,21 @@ WADF is primarily a templating tool based on specifying "macros" which have valu
 
 Note that the configurations (both global, user-specific and site specific) are split into sections:
 
-[globals]
-[local]
-[dev]
-[staging]
-[live]
+- `[globals]`
+- `[local]`
+- `[dev]`
+- `[staging]`
+- `[live]`
 
-Only "[globals]" is special.  The other section names are merely identifiers and can be anything you wish as long as they match what you intend to use as "profile" names on the various servers/machines you are going to deploy to. Although not necessary, it is suggested that you stick with the values suggested above, where:
+Only `[globals]` is special.  The other section names are merely identifiers and can be anything you wish as long as they match what you intend to use as "profile" names on the various servers/machines you are going to deploy to. Although not necessary, it is suggested that you stick with the values suggested above, where:
 
 - "local" is for deployment to a local workstation
 - "dev" is for deployment to a shared development server
 - "staging" is for deployment to a client-facing staging server
 - "live" is for deployment to a production server
 
-
 =========================================================
-DEPLOYING A SITE WITH WADF
+3. DEPLOYING A SITE WITH WADF
 =========================================================
 Basic Setup Requirements
 ------------------------
@@ -112,15 +112,15 @@ If you want to exclude certain paths from template processing (e.g. temporary ch
 
 Webserver configuration
 -----------------------
-In the root of your site you should have a file named according to the value of the vhost_config_template file. By default this is "vhost-@webserver_type@.conf" which resolves to "vhost-httpd.conf" for Apache HTTPD. Some useful macros when creating a template vhost config are:
+In the root of your site you should have a file named according to the value of the vhost_config_template file. By default this is `vhost-@webserver_type@.conf` which resolves to "vhost-httpd.conf" for Apache HTTPD. Some useful macros when creating a template vhost config are:
 
-@vhostX_name@ - the HTTP host name
-@vhostX_interface@ - the vhost interface details which may be an IP, IP/port or multiples of these
+- `@vhostX_name@` - the HTTP host name
+- `@vhostX_interface@` - the vhost interface details which may be an IP, IP/port or multiples of these
 
 where the 'X' in vhostX_name and vhostX_interface is an integer from 1..n depending on how many virtual hosts exist. This allows apps that have several different vhost interfaces to be supported.
 
 e.g.
-
+```
 # vhost.conf.template
 <VirtualHost @vhost1_interface@>
 	ServerName @vhost1_name@
@@ -128,7 +128,7 @@ e.g.
 	RewriteEngine on
 	RewriteRule /.* @deploy_path@/application/bootstrap_http.php
 </VirtualHost>
-
+```
 Don't include any environment-specific configuration in here, e.g. logs. These should be configured separately, possibly via the vhost_config_append/vhost_config_prepend macros.
 
 
@@ -149,12 +149,17 @@ Where to find the dependency tags file is controlled by the option "dep_tags_fil
 
 There are two types of dependencies which can be deployed via dependency tags: PEAR packages and SVN dependencies.
 
-PEAR package dependencies:
-These are listed in the dependency tags file in a format like this: "PEAR:channel.example.com/Package_Name-1.2.3".
+#### PEAR package dependencies:
+These are listed in the dependency tags file in a format like this:
+```
+PEAR:channel.example.com/Package_Name-1.2.3".
+```
 
-SVN dependencies:
+#### SVN dependencies:
 These are listed in the dependency tags file as follows:
+```
 SVN:http://svn.example.com/path/to/something@1234 somedir/path
+```
 
 where 1234 is the revision number to check out and "somedir/path" is the path relative to the deployment root to check the working copy out to.
 When SVN dependencies are checked out, WADF looks to see if they appear to be PEAR packages (i.e. have a package.xml in their root). If so, it installs that into the main PEAR installation for the deployment.
@@ -172,7 +177,7 @@ php_admin_flag engine on
 However, for PHP running as a CGI, the directives are usually stored in a separate php.ini file.
 
 WADF is aware of both types of PHP configuration and explicitly supports them via the "php_type" configuration parameter. In either case, it expects to find a file called "php.ini" in the root of the site (this will normally be pre-templated as php.ini.template). Then, when deploying a site, WADF inserts PHP directives in the appropriate place.
-- If "php_type" is set to "mod_php", then it converts the directives to Apache config style and inserts them in the VirtualHost. It also converts comments from the php.ini "; comment" format to the Apache "# comment" format. 
+- If "php_type" is set to "mod_php", then it converts the directives to Apache config style and inserts them in the VirtualHost. It also converts comments from the php.ini "; comment" format to the Apache "# comment" format.
 - If "php_type" is set to "cgi:/path/to/file" then it simply copies the ini file to "/path/to/file" ready to be used by the CGI interpreter.
 
 Example php.ini:
@@ -191,18 +196,19 @@ For each database that the application uses, you should store the schema in the 
 In your code, you should use a template file (see above) and use the
 following macros:
 
-@dbX_type@ - database type according to the PEAR conventions
-@dbX_host@ - database host
-@dbX_name@ - database name
-@dbX_user@ - database username
-@dbX_pass@ - database password
+- `@dbX_type@` - database type according to the PEAR conventions
+- `@dbX_host@` - database host
+- `@dbX_name@` - database name
+- `@dbX_user@` - database username
+- `@dbX_pass@` - database password
 
 where X is the database number (to support apps that call on multiple
 databases)
 
 e.g.
-
+```
 @db1_type@://@db1_user@@@db1_host@/@db1_name@/@db1_pass@
+```
 
 This will be replaced with the database hostname, which is selectable by the WADF client according to the profile in use. The above definitions are configured separately on the staging server, on a per-application basis.
 
@@ -216,9 +222,8 @@ When running a kickstart script, WADF sets some environment variables which can 
 - "DEPLOY_INITDB" is to indicate whether the database was re-deployed. It will be set to "1" if the database was re-deployed and "0" otherwise. This can be useful for the script to decide whether it needs to re-initialise values in a database or not.
 - "DEPLOY_VERBOSITY" indicates the verbosity level of WADF's output, where increasing numbers mean an increasing level of verbosity. Currently this will usually be "0", but will be "1" if WADF was called with a "-v" option. In the future, higher numbers may be used to indicate increasing levels of verbosity.
 
-
 =========================================================
-ADDITIONAL CONFIGURATION
+4. ADDITIONAL CONFIGURATION
 =========================================================
 Although the default configuration options are probably sufficient for deployment of sites for development purposes (e.g. using auto-generated usernames and passwords), more complex configuration is required to manage the demands of a multi-stage environment where you may have (for example) development, staging and live environments that differ.
 
@@ -227,6 +232,7 @@ local_config
 ------------
 The local_config option specifies the location of a file where configuration directives pertaining to the specific application (rather than applications in general) can be put. By default this is in @deploy_path@/wadf.conf. The format of this file is exactly the same as other WADF config files and typically this will include several profile sections, containing environment-specific configs (such as database hostnames, virtual host hostnames etc.). It may also contain configuration variables which are specific to that application and which are not standard WADF variables. For example:
 
+```
 [globals]
 ; This is an option which is specific to this application and not a WADF
 ; standard variable
@@ -239,60 +245,60 @@ my_config_option = bar
 
 [staging]
 vhost1_name = staging.example.com
-
+```
 
 Sensitive configuration parameters
 ----------------------------------
 There may be some configuration parameters which you regard as sensitive and may not want to store in the version control system along with the main application, for reasons of security or privacy. For example, database passwords for your live servers. In that case, you may want the person deploying the application to have to enter them.
 
 To achieve this, you can specify "%%" as the value of any configuration parameter. Then, when wadf-deploy is run, it will prompt for the value of this option. For example:
-
+```
 [live]
 db1_pass = %%
-
+```
 In the above example, when deploying to the live server, WADF will prompt as follows:
-
+```
 "Please enter the value for the configuration option 'db1_pass':"
-
+```
 The value stated will be stored locally in the instance file (see next section). Then, next time a wadf-reprocess is run *on that copy*, the value that was entered will be automatically substituted. If you want to edit the value, see the instructions in the next section.
 
 Optionally, you can specify notes following the '%%'. These do not need to be quoted or escaped, but should not include double quotes. For example:
-
+```
 admin_email_address = %%This is auto-generated; ask the Deployment Team after server set up
-
+```
 These will be shown when deployment is terminated, like so:
-
+```
 "Please enter the value for the config option 'db1_pass'
 Notes: This is auto-generated; ask the Deployment Team after server set up"
-
+```
 
 
 Marking macros as "to do"
 -------------------------
 Sometimes, it is desirable to be able to mark macros as "to do" (particularly when checking into a version control system), meaning that their value *should* be filled in before deployment (unlike macros marked as "%%"); however, at the present time their correct/final value is unknown. The special value of "**" can be used to indicate this. A good example of when this might be useful would be when configuring some custom parameter for a site (e.g. the administrator's e-mail address) and it is desirable to use a different setting for different profiles (e.g. during development and when launching on a live system). In this case, a configuration similar to the following could be used in a local wadf.conf (assuming that a profile called "live" is used on live servers):
-
+```
 [globals]
 admin_email_address = me@example.com
 
 [live]
 admin_email_address = **
-
+```
 By doing this, when it comes to deploying the live system, if nobody has yet filled in the correct value for the live macro, WADF will terminate deployment and give the following error:
-
+```
 "The macro 'admin_email_address' is set to '**', indicating that it needs to be configured."
-
+```
 Optionally, you can specify notes following the '**'. These do not need to be quoted or escaped, but should not include double quotes. For example:
-
+```
 admin_email_address = **Awaiting confirmation from John of what this value should be.
-
+```
 These will be shown when deployment is terminated, like so:
-
+```
 "The macro 'admin_email_address' is set to '**', indicating that it needs to be configured.
 Notes: Awaiting confirmation from John of what this value should be."
-
+```
 
 =========================================================
-THE WADF INSTANCE FILE
+5. THE WADF INSTANCE FILE
 =========================================================
 In order to know that a particular directory is a WADF-deployed application, WADF creates a special file called .wadf-instance in the deployed directory. This file is a simple newline-separated text file which has the following format:
 
@@ -301,17 +307,16 @@ In order to know that a particular directory is a WADF-deployed application, WAD
 
 No comments are permitted in the file. There are no profile sections in the file because, by definition, the file is specific to the current deployed instance, whatever that may be.
 
-
 =========================================================
-THE WADF MICRO HTTP SERVER
+6. THE WADF MICRO HTTP SERVER
 =========================================================
 WADF can start up local instances of Apache running as the current user - meaning that a complete development environment that closely simulates a live environment can be set up without requiring special privileges.
 
-You do not have to use the WADF micro HTTP server at all, if you don't want to. If you do, it is controlled via the "wadf-httpd" script which is described fully in the next section, "Command Line Usage". You will need to set the following WADF options: 
-
+You do not have to use the WADF micro HTTP server at all, if you don't want to. If you do, it is controlled via the "wadf-httpd" script which is described fully in the next section, "Command Line Usage". You will need to set the following WADF options:
+```
 webserver_restart_cmd = wadf-httpd reloadstart
 vhost_config_path = /home/@user@/.wadf/vhosts (NB this path is currently "special" - do not change it)
-
+```
 When first running the wadf-httpd server, a sample config is set up in ~/.wadf/httpd.conf. You can then amend this file as you see fit.
 
 After starting the WADF HTTP server, a number of additional files will be generated in ~/.wadf by default (that is, assuming you don't change the default WADF Apache config):
@@ -323,14 +328,14 @@ After starting the WADF HTTP server, a number of additional files will be genera
 - default_error_page.html - a file with a list of the deployed applications, shown if you access the local WADF HTTP server over an unconfigured interface
 - vhosts/00-default.html - the virtual host to trigger the default error page
 
-
 =========================================================
-COMMAND LINE USAGE
+7. COMMAND LINE USAGE
 =========================================================
 WADF has a number of command line tools which are described below. In addition to the functionality below, most also support an additional command line switch "-V" which, if used on its own, provides version and licensing information.
 
+```
 wadf-deploy [-d <macro name=macro value [-d ...]] [-r <revision>] <appref> [<version>]
-------------------------------------------------
+```
 This performs a fresh deployment of application <appref> from the version control system.
 
 Optionally, it may be passed the following parameters:
@@ -391,22 +396,23 @@ For workstation-based development, controls the Apache HTTPD webserver running a
 
 The output of "wadf-httpd status" looks something like the following:
 
+```
 *******************************************
 WADF HTTPD instance is running (pid 1234)
 Listening on port 10080; configured for the following applications:
 
  someapp: (/path/to/someapp) ver=DEVTR:1234
    http://someapp.mypc.example.com:10080
-   
+
  otherapp: (/path/to/otherap) ver=DEVTR:4870
    http://otherapp.mypc.example.com:10080
 *******************************************
+```
 
 The "ver=" output shows which version was deployed the last time that "wadf-reprocess" was run. This is in the format described in the section "Version identifiers".
 
-
 =========================================================
-VERSION IDENTIFIERS
+8. VERSION IDENTIFIERS
 =========================================================
 A version identifier is available to uniquely identify the version of the end-application (client application) checked out from the version control system. This is available in the 'deploy_version' macro during template processing. It is in the following format:
 
@@ -416,30 +422,28 @@ Tag:    [tag name]
 
 where "[revision]" is the revision number
 
-
 =========================================================
-CRONTAB SUPPORT
+9. CRONTAB SUPPORT
 =========================================================
 By creating a file called "crontab" in the root of the deployed application (in standard crontab format), WADF can install standard cronjobs for the current user account. It places special metadata markers in the installed crontab so that if further redeployments are done, the crontab entries are not duplicated.
 
-
 =========================================================
-GOTCHAS
+10. GOTCHAS
 =========================================================
 - If you are letting WADF generate a "clean" PEAR installation when you deploy an application, then if you need to run PEAR manually for any reason, you should be sure to use the PEAR "binary" from the "clean" install
 
 i.e. DON'T do this:
-
+```
 pear -c /path/to/myapp/pear_local/.pearrc [something]
-
+```
 Instead, do this:
-
+```
 /path/to/myapp/pear_local/pear [something]
-
+```
 Otherwise, "odd" stuff may happen with config variables.
 
 =========================================================
-FAQ
+11. FAQ
 =========================================================
 Q: What about SSL?
 A: SSL is a hosting-environment-specific (not application-specific) configuration so should either be done via an SSL terminator or via vhost_config_append in the 'live' profile
@@ -448,6 +452,7 @@ Q: What about redirects (e.g. to force a certain page to redirect to a secure ve
 A: Use a local_config file (see section "Additional Configuration") to set a custom variable (e.g. "enable_ssl") on a per-profile basis. Set it to "0" in the "globals" profile and then for the profile(s) that you want it enabled (e.g. "live"), set it to "1". Then, you may have a page something like this:
 
 checkout.php.template:
+```php
 <?php
 if ('@enable_ssl@' == '1') {
 	// N.B. the $_SERVER['HTTPS'] variable is not fully standardised and will
@@ -455,11 +460,12 @@ if ('@enable_ssl@' == '1') {
 	// set to "1" if the current page is being served over a secure connection.
 	if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 1) {
 
-		// This is not the fully correct way to determine the current HTTP host 
+		// This is not the fully correct way to determine the current HTTP host
 		// but it illustrates the point here.
 		$host = $_SERVER['HTTP_HOST'];
 
 		header("Location: https://$host/checkout.php");
 	}
 }
+```
 
