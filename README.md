@@ -358,7 +358,7 @@ Optionally, wadf-reprocess can be passed parameters to switch the working copy t
 
 tag/XXX:    Use the version of the software identified with tag "XXX". "tag/LATEST" means use the most recent tag.
 branch/XXX: Use the HEAD of the branch called "XXX"
-trunk:      Use the software trunk
+trunk:      Use the software trunk  
 
 Time-saving options:
 - You can skip the prompt for re-running the kickstart process with the "--no-kickstart" option. However, it would be better to fix the kickstart script so that it can run (safely) in all circumstances! (See the "Kickstart (setup) script" section for advice about this, in particular the DEPLOY_INITDB variable.)
@@ -448,7 +448,7 @@ Otherwise, "odd" stuff may happen with config variables.
 Q: What about SSL?
 A: SSL is a hosting-environment-specific (not application-specific) configuration so should either be done via an SSL terminator or via vhost_config_append in the 'live' profile
 
-Q: What about redirects (e.g. to force a certain page to redirect to a secure version) based on whether the site is being accessed over SSL?
+Q: What about redirects (e.g. to force a certain page to redirect to a secure version) based on whether the site is being accessed over SSL?  
 A: Use a local_config file (see section "Additional Configuration") to set a custom variable (e.g. "enable_ssl") on a per-profile basis. Set it to "0" in the "globals" profile and then for the profile(s) that you want it enabled (e.g. "live"), set it to "1". Then, you may have a page something like this:
 
 checkout.php.template:
