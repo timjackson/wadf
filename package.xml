@@ -58,6 +58,7 @@
 	</file>
 	<dir name="WADF" baseinstalldir="Tools">
 		<dir name="VCDriver">
+			<file name="Git.php" role="php"/>
 			<file name="Interface.php" role="php"/>
 			<file name="SVN.php" role="php"/>
 		</dir>

@@ -45,6 +45,8 @@ class Tools_WADF {
 	        
 	protected $_debug = self::OUTPUT_NORMAL;
 	
+	const DEPENDENCY_TYPE_PEAR = 'PEAR';
+	
 	// the app reference
 	public $appref;
 
@@ -95,6 +97,8 @@ class Tools_WADF {
 	 * instance files.
 	 */
 	private $_cmdline_macros = array();
+
+	public static $vc_drivers = null;
 	
 	public function __construct($appref, $options=null, $cmdline_macros=null, $initial_output_level=self::OUTPUT_NORMAL)
 	{
@@ -141,27 +145,74 @@ class Tools_WADF {
 		
 		// Load version control plugin
 		$vc_type = strtolower($this->resolveMacro('vc_type'));
-		$load_vc_plugin = null;
-		switch ($vc_type) {
-			case 'svn':
-				$load_vc_plugin = 'SVN';
-				break;
-			case 'none':
-			case '@vc_type@':
-				break;
-			default:
-				throw new Exception("Version control plugin '$vc_type' is not supported");
-		}
-		if ($load_vc_plugin) {
-			$vc_class = self::loadVCDriver($load_vc_plugin);
+		$vc_class = self::loadVCDriver($vc_type);
+		if (isset($vc_class)) {
 			$this->_vc = new $vc_class($this);
 		}
 	}
-	
-	public static function loadVCDriver($driver)
+
+	/**
+	 * Load a version control driver for the specified type.
+	 *
+	 * The type is essentially the vc name but lowercased.
+	 *
+	 * @throws Exception If not driver found for the specified type
+	 * @return string|null Class name for the version control driver or null if the type is undefined
+	 */
+	public static function loadVCDriver($vc_type)
 	{
-		require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver' . DIRECTORY_SEPARATOR . $driver. '.php';
-		return 'Tools_WADF_VCDriver_' . $driver;
+		if ($vc_type == 'none' || $vc_type == '@vc_type@') {
+			return null;
+		}
+		
+		$drivers = self::getAllVCDrivers();
+
+		foreach ($drivers as $driver => $class) {
+			if (strtolower($driver) == strtolower($vc_type)) {
+				return $class;
+			}
+		}
+		
+		throw new Exception("Version control plugin '$vc_type' is not supported");
+	}
+
+	/**
+	 * Get an array of all available version control drivers.
+	 *
+	 * For each driver the array contains the driver name, the class name and
+	 * path to the driver file.
+	 *
+	 * @return array
+	 */
+	public static function getAllVCDrivers()
+	{
+		if (!isset(self::$vc_drivers)) {
+			self::$vc_drivers = array();
+
+			$driver_path = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WADF' . DIRECTORY_SEPARATOR . 'VCDriver';
+
+			$files = scandir($driver_path);
+			foreach ($files as $file) {
+				if (!in_array($file, array('.', '..', 'Interface.php')) && preg_match('@^(.*)\.php$@', $file, $matches)) {
+					$driver = $matches[1];
+					require_once $driver_path . DIRECTORY_SEPARATOR . $file; //require all as it's needed by _getFilesToIgnore()
+					self::$vc_drivers[$driver] = 'Tools_WADF_VCDriver_' . $driver;
+				}
+			}
+		}
+
+		return self::$vc_drivers;
+	}
+	
+	public static function getFilesToIgnore()
+	{
+		$ignore = array('.', '..');
+		
+		foreach (self::getAllVCDrivers() as $driver => $class) {
+			$ignore = array_merge($ignore, call_user_func(array($class, "getVCFilesToIgnore")));
+		}
+		
+		return $ignore;
 	}
 	
 	protected function _setInternalMacros()
@@ -905,7 +956,7 @@ class Tools_WADF {
 		// See if we already have a checked-out copy
 		// We could just do a file_exists() on .wadf-instance, but actually
 		// checking for version control metadata is safer
-		$vc_info = $this->readVCInfoFromDir($destdir);
+		$vc_info = $this->_vc->readVCInfoFromDir($destdir);
 		
 		$action = 'checkout';
 		if (is_object($vc_info)) {
@@ -980,7 +1031,7 @@ class Tools_WADF {
 	 */
 	public function setVCVersionMacro($dir)
 	{
-		$live_vc_info = $this->readVCInfoFromDir($dir);
+		$live_vc_info = $this->_vc->readVCInfoFromDir($dir);
 		if ($live_vc_info === false) {
 			// The version control identifier could not be read (perhaps the site
 			// hasn't been deployed yet?) so return an "unknown" id
@@ -990,19 +1041,6 @@ class Tools_WADF {
 		}
 		$this->_appendMacroDefs(array('deploy_version' => $vc_id));
 		return $vc_id;
-	}
-	
-	/**
-	 * Read version control info from deployed copy
-	 * @return Tools_WADF_VCInfo|false
-	 */
-	public static function readVCInfoFromDir($dir)
-	{
-		if (file_exists($dir . DIRECTORY_SEPARATOR . '.svn')) {
-			self::loadVCDriver('SVN');
-			return Tools_WADF_VCDriver_SVN::readVCInfoFromDir($dir);
-		}
-		return false;
 	}
 	
 	/**
@@ -1268,45 +1306,19 @@ class Tools_WADF {
 			if ($dep_tags !== false) {
 				$deps = $this->processDepTagFile($dep_tags);
 				foreach ($deps as $dep) {
-					if ($dep->type == Tools_WADF_Dependency::TYPE_PEAR) {
+					if ($dep->type == Tools_WADF::DEPENDENCY_TYPE_PEAR) {
 						$pear_deps_to_force_install[] = $dep->name . '-' . $dep->version;
-					} else if ($dep->type == Tools_WADF_Dependency::TYPE_SVN) {
-						self::loadVCDriver('SVN');
-						$svn = new Tools_WADF_VCDriver_SVN($this);
-						// dep->name is the SVN path to check out
-						// dep->metadata contains relative path
-						$path = $this->resolveMacro('deploy_path') . DIRECTORY_SEPARATOR . $dep->metadata;
-						// trim trailing slash from path, if it exists
-						if (substr($path, -1) == DIRECTORY_SEPARATOR) {
-							$path = substr($path, 0, -1);
-						}
-						if (is_dir($path)) {
-							if (is_dir($path . DIRECTORY_SEPARATOR . '.svn')) {
-								unset($out);
-								exec("svn status $path", $out, $ret);
-								if (count($out) == 0) {
-									$this->_debugOutput("\tDeploying SVN dependency $dep->name to existing working copy $path", self::DEBUG_INFORMATION);
-									unset($out);
-									$svn->switchVerFromPath($dep->name, $dep->version, $path);
-									if (file_exists("$path/package.xml")) {
-										$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
-										$local_pear_packages_to_install[] = "$path/package.xml";
-									}
-								} else {
-									$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path is not a clean working copy", self::DEBUG_ERROR);
-									$this->_debugOutput("\tSVN status output was:\n" . implode("\n", $out), self::DEBUG_INFORMATION);
-								}
-							} else {
-								$this->_debugOutput("\tCannot deploy SVN dependency $dep->name; $path already exists but is not a working copy", self::DEBUG_ERROR);
-							}
-						} else {
-							$this->_debugOutput("\tDeploying SVN dependency $dep->name to $path", self::DEBUG_INFORMATION);
-							$svn->checkoutFromPath($dep->name, $dep->version, $path);
-							
-							if (file_exists("$path/package.xml")) {
-								$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", self::DEBUG_INFORMATION);
+					} else {
+						if (class_exists($dep->type)) {
+							$vc = new $dep->type($this);
+							$path = $vc->installSingleDependency($dep);
+
+							if (isset($path) && file_exists("$path/package.xml")) {
+								$this->_debugOutput("Marking $path/package.xml as a PEAR package to install...", Tools_WADF::DEBUG_INFORMATION);
 								$local_pear_packages_to_install[] = "$path/package.xml";
 							}
+						} else {
+							$this->_debugOutput("Unrecognised dependency type '$dep->type'", self::DEBUG_WARNING);
 						}
 					}
 				}
@@ -1455,33 +1467,27 @@ class Tools_WADF {
 		foreach ($lines as $line) {
 			$line = trim($line);
 			if (!empty($line) && $line{0} != '#' && $line{0} != ';') { // comments
-				// lines are in format "deptype:depname-depversion"
-				// e.g. PEAR deps are "PEAR:channel/package_name-x.y.z"
+				// lines are in format "deptype:depdetails" (see docs/wadf.txt for format details)
 				if (preg_match("/^([a-z0-9]{2,10}):(.+)$/i", $line, $matches)) {
-					if (in_array($matches[1], array_keys(Tools_WADF_Dependency::$types))) {
-						$dep = new Tools_WADF_Dependency;
-						$dep->type = $matches[1];
-						switch ($matches[1]) {
-							case Tools_WADF_Dependency::TYPE_PEAR:
-								list($dep->name, $dep->version) = explode('-', $matches[2]);
-								break;
-							case Tools_WADF_Dependency::TYPE_SVN:
-								if (preg_match('/^(.+)@(\d+)\s+(.+)$/', $matches[2], $parts)) {
-									$dep->name = $parts[1];
-									$dep->version = $parts[2];
-									$dep->metadata = $parts[3];
-									// Strip leading slashes; dep tags are always relative to the site root
-									if ($dep->metadata{0} == '/') {
-										$dep->metadata = substr($dep->metadata, 1);
-									}
-								} else {
-									$this->_debugOutput("Unknown SVN dependency syntax in '$matches[2]'", self::DEBUG_WARNING);
-								}
-								break;
-						}
-						$deps[] = clone $dep;
+					if ($matches[1] == Tools_WADF::DEPENDENCY_TYPE_PEAR) {
+						$dep = new Tools_WADF_Dependency_PEAR();
+						list($dep->name, $dep->version) = explode('-', $matches[2]);
 					} else {
-						$this->_debugOutput("Unknown dependency type '$matches[1]' in dep tags file - line was '$line'", self::DEBUG_WARNING);
+						try {
+							$vc_class = self::loadVCDriver($matches[1]);
+						} catch (Exception $e) {}
+						if (!isset($vc_class)) {
+							$this->_debugOutput("Unknown dependency type '$matches[1]' in dep tags file - line was '$line'", self::DEBUG_WARNING);
+						}
+
+						$dep = call_user_func(array($vc_class, "getDependencyDetails"), $matches[2]);
+						if (!isset($dep)) {
+							$this->_debugOutput("Unknown dependency syntax in '$matches[2]'", self::DEBUG_WARNING);
+						}
+					}
+
+					if (isset($dep)) {
+						$deps[] = clone $dep;
 					}
 				} else {
 					$this->_debugOutput("Unknown dependency syntax in dep tags file - line was '$line'", self::DEBUG_WARNING);
@@ -1984,7 +1990,7 @@ class Tools_WADF {
 		if (!file_exists($dir) || !is_dir($dir)) return $files;
 		$dh = dir($dir);
 		while ($file = $dh->read()) {
-			if ($file == '..' || $file == '.' || $file == '.svn' || $file == 'CVS') continue;
+			if (in_array($file, self::getFilesToIgnore())) continue;
 			$file = $dir . DIRECTORY_SEPARATOR . $file; // make into an absolute path
 			if (is_file($file)) {
 				$files[] = $file;
@@ -2001,7 +2007,7 @@ class Tools_WADF {
 		if (!file_exists($dir) || !is_dir($dir)) return $template_files;
 		$dh = dir($dir);
 		while ($file = $dh->read()) {
-			if ($file == '..' || $file == '.' || $file == '.svn' || $file == 'CVS') continue;
+			if (in_array($file, self::getFilesToIgnore())) continue;
 			$file = $dir . DIRECTORY_SEPARATOR . $file; // make into an absolute path
 			if (substr($file, -9) == '.template' && is_file($file)) {
 				$template_files[] = $file;
@@ -2436,7 +2442,7 @@ class Tools_WADF {
 		$this->_debug = $level;
 	}
 	
-	protected function _debugOutput($string, $level=self::DEBUG_GENERAL)
+	public function _debugOutput($string, $level=self::DEBUG_GENERAL)
 	{
 		if ($level < $this->_debug) {
 			$this->consoleOutput($string);
@@ -2688,15 +2694,24 @@ class Tools_WADF_VCInfo
 	public $modifications; //bool
 }
 
-class Tools_WADF_Dependency
-{
-	const TYPE_PEAR = 'PEAR';
-	const TYPE_SVN  = 'SVN';
-	
-	public static $types = array(self::TYPE_PEAR => 'PEAR package', self::TYPE_SVN => 'SVN checkout');
 
+abstract class Tools_WADF_Dependency
+{
+	/**
+	 * $type is the only common attribute for dependencies. Will be
+	 * Tools_WADF::DEPENDENCY_TYPE_PEAR or the class name of the Version
+	 * Control Driver.
+	 */
 	public $type;
+}
+
+/**
+ * PEAR Package dependency. WADF is aware of these directly, whereas other
+ * dependencies are defined in the relevant Version Control Driver classes.
+ */
+class Tools_WADF_Dependency_PEAR extends Tools_WADF_Dependency
+{
+	public $type = Tools_WADF::DEPENDENCY_TYPE_PEAR;
 	public $name;
 	public $version;
-	public $metadata;
 }

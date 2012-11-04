@@ -2,7 +2,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2012 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -50,14 +50,13 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 		$this->_runSVN("checkout $svn_path $dest_path");
 	}
 	
-	public function checkoutFromPath($src_path, $version, $dest_path)
+	protected function checkoutFromPath($src_path, $version, $dest_path)
 	{
 		$this->_runSVN("checkout $src_path@$version $dest_path");
 	}
 	
 	public function switchVer($revtype, $rev_translated, $raw_rev, $dest_path)
 	{
-		$cwd = getcwd();
 		$src_path = $this->_getSVNPath($revtype, $rev_translated);
 		$this->switchVerFromPath($src_path, $raw_rev, $dest_path);
 	}
@@ -231,4 +230,98 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 		}
 	}
 
+	/**
+	 * Get the details of an SVN dependency
+	 *
+	 * @see Tools_WADF_VCDriver_Interface::getDependencyDetails()
+	 * @param string $dependency_line The dependency line from the deptags file (excluding the type)
+	 * @return Tools_WADF_Dependency_SVN|null
+	 */
+	public static function getDependencyDetails($dependency_line)
+	{
+		if (preg_match('/^(.+)@(\d+)\s+(.+)$/', $dependency_line, $parts)) {
+			$dep = new Tools_WADF_Dependency_SVN();
+			$dep->type = get_class();
+			$dep->full_svn_url = $parts[1];
+			$dep->revision = $parts[2];
+			$dep->local_relative_path = $parts[3];
+			
+			// Strip leading slashes; dep tags are always relative to the site root
+			if ($dep->local_relative_path{0} == '/') {
+				$dep->local_relative_path = substr($dep->local_relative_path, 1);
+			}
+
+			return $dep;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Install a single dependency from SVN, based on an object that was
+	 * returned earlier from getDependencyDetails().
+	 *
+	 * @see Tools_WADF_VCDriver_Interface::installSingleDependency()
+	 * @param Tools_WADF_Dependency_SVN $dep
+	 * @return string|null The full path to the installed dependency or null on failure
+	 */
+	public function installSingleDependency(Tools_WADF_Dependency $dep)
+	{
+		if (!($dep instanceof Tools_WADF_Dependency_SVN)) {
+			$this->_wadf->_debugOutput("\tDependency $dep->url is not an SVN dependency", Tools_WADF::DEBUG_ERROR);
+		}
+		
+		// dep->full_svn_url is the SVN path to check out
+		// dep->local_relative_path contains relative path
+		$path = $this->_wadf->resolveMacro('deploy_path') . DIRECTORY_SEPARATOR . $dep->local_relative_path;
+		// trim trailing slash from path, if it exists
+		if (substr($path, -1) == DIRECTORY_SEPARATOR) {
+			$path = substr($path, 0, -1);
+		}
+		if (is_dir($path)) {
+			if (is_dir($path . DIRECTORY_SEPARATOR . '.svn')) {
+				$out = $ret = null;
+				exec("svn status $path", $out, $ret);
+				if (count($out) == 0) {
+					$this->_wadf->_debugOutput("\tDeploying SVN dependency $dep->full_svn_url to existing working copy $path", Tools_WADF::DEBUG_INFORMATION);
+					$this->switchVerFromPath($dep->full_svn_url, $dep->revision, $path);
+
+					return $path;
+				} else {
+					$this->_wadf->_debugOutput("\tCannot deploy SVN dependency $dep->full_svn_url; $path is not a clean working copy", Tools_WADF::DEBUG_ERROR);
+					$this->_wadf->_debugOutput("\tSVN status output was:\n" . implode("\n", $out), Tools_WADF::DEBUG_INFORMATION);
+				}
+			} else {
+				$this->_wadf->_debugOutput("\tCannot deploy SVN dependency $dep->full_svn_url; $path already exists but is not a working copy", Tools_WADF::DEBUG_ERROR);
+			}
+		} else {
+			$this->_wadf->_debugOutput("\tDeploying SVN dependency $dep->full_svn_url to $path", Tools_WADF::DEBUG_INFORMATION);
+			$this->checkoutFromPath($dep->full_svn_url, $dep->revision, $path);
+
+			return $path;
+		}
+
+		return null;
+	}
+	
+	
+	/**
+	 * Get files/dirs to ignore - For SVN it is only the .svn directory
+	 *
+	 * @see Tools_WADF_VCDriver_Interface::getVCFilesToIgnore()
+	 * @return array An array of files/directories that will be ignored by WADF
+	 */
+	public static function getVCFilesToIgnore()
+	{
+		return array('.svn');
+	}
+
 }
+
+class Tools_WADF_Dependency_SVN extends Tools_WADF_Dependency
+{
+	public $full_svn_url;
+	public $revision;
+	public $local_relative_path;
+}
+
