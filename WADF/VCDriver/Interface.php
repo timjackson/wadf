@@ -36,19 +36,9 @@ interface Tools_WADF_VCDriver_Interface
 	 * @param string  $revtype         Revision type. One of the Tools_WADF::REVTYPE_* constants
 	 * @param string  $rev_translated  Revision, as appropriate for the specified revision type. i.e. tag name, branch name
 	 * @param string  $raw_rev         Raw revision. A raw (absolute) revision number or identifier e.g. SVN revision number
-	 * @param string $dest_path Destination path to check out to
+	 * @param string  $dest_path       Destination path to check out to
 	 */
 	public function checkout($revtype, $rev_translated, $raw_rev, $dest_path);
-
-	/**
-	 * Check out a specified version from a version control system-specific path
-	 * and version
-	 *
-	 * @param string $src_path  The path to check out from
-	 * @param string $raw_rev   Raw revision. A raw (absolute) revision number or identifier e.g. SVN revision number
-	 * @param string $dest_path Destination path to check out to
-	 */
-	public function checkoutFromPath($src_path, $raw_rev, $dest_path);
 	
 	/**
 	 * Switch an existing working copy to a specified revision
@@ -82,5 +72,48 @@ interface Tools_WADF_VCDriver_Interface
 	 * @return Tools_WADF_VCInfo|false
 	 */
 	public static function readVCInfoFromDir($dir);
+
+	
+
+	/**
+	 * Parse the details of a dependency string as read from the dependency tags
+	 * file. The $dependency_line string contains the entire line that is
+	 * specific for this type (the type itself is not included).
+	 *
+	 * If the parsing is successfull then this function returns an object of
+	 * a class extending Tools_WADF_Dependency. Otherwise it returns null.
+	 *
+	 * @see docs/wadf.txt for available formats
+	 * @param string $dependency_line The dependency line from the deptags file (excluding the type)
+	 * @return Tools_WADF_Dependency|null
+	 */
+	public static function getDependencyDetails($dependency_line);
+
+
+	/**
+	 * Install a single dependency from VC, based on an object that was
+	 * returned earlier from getDependencyDetails().
+	 *
+	 * If a dependency already exisits in the destination folder and is
+	 * unmodified then it will be updated to the version as defined in the
+	 * current dependency.
+	 *
+	 * When the install is completed this returns the full path of the current
+	 * dependency. In case that is a PEAR package (has the package.xml file
+	 * inside) then WADF will install it into the local PEAR.
+	 *
+	 * @param Tools_WADF_Dependency $dep
+	 * @return string|null The full path to the installed dependency or null on failure
+	 */
+	public function installSingleDependency(Tools_WADF_Dependency $dep);
+	
+	
+	/**
+	 * Get an array of files/directories that contain internal metadata specific
+	 * to the particular version control system.
+	 *
+	 * @return array An array of files/directories that will be ignored by WADF
+	 */
+	public static function getVCFilesToIgnore();
 
 }

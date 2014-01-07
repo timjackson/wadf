@@ -154,7 +154,12 @@ The PEAR dependency management discussed above is extremely useful, but sometime
 
 Where to find the dependency tags file is controlled by the option "dep_tags_file"; it defaults to look for a file called "dependency-tags" in the root of the deployed site.
 
-There are two types of dependencies which can be deployed via dependency tags: PEAR packages and SVN dependencies.
+When reprocessing a site using wadf-reprocess, you can use the option "--no-dep-tags" to ignore the dependency tags file and use the "normal" dependency mechanism.
+
+The following types of dependencies can be deployed via dependency tags:
+- PEAR packages,
+- SVN dependencies and
+- Git dependencies.
 
 #### PEAR package dependencies:
 These are listed in the dependency tags file in a format like this:
@@ -172,7 +177,20 @@ where 1234 is the revision number to check out and "somedir/path" is the path re
 When SVN dependencies are checked out, WADF looks to see if they appear to be PEAR packages (i.e. have a package.xml in their root). If so, it installs that into the main PEAR installation for the deployment.
 Deployment of SVN dependencies is more reliable if you use an SVN client version 1.5 or later, as WADF can use "peg" revisions to ensure it gets the exact version of the file specified in the dependency tags file.
 
-When reprocessing a site using wadf-reprocess, you can use the option "--no-dep-tags" to ignore the dependency tags file and use the "normal" dependency mechanism.
+#### Git dependencies:
+These are listed in the dependency tags file as follows:
+```
+Git:http://git.example.com/path/to/repo.git somedir/path                        [1]
+Git:http://git.example.com/path/to/repo.git|branch|master somedir/path          [2]
+Git:http://git.example.com/path/to/repo.git|branch|master|123efb5 somedir/path  [3]
+Git:http://git.example.com/path/to/repo.git|branch|1.0|123efb5 somedir/path     [4]
+Git:http://git.example.com/path/to/repo.git|tag|1.0.1                           [5]
+```
+
+Lines 1 and 2 will have the same effect. After the repo URL you can specify if you want to get a branch or a tag.
+You can also specify a particular commit ("123efb5" in the examples above) that will be deployed, however you can only do this for branches (a dependency for a tag that is using a specified commit will be skipped).
+Note: specifying a commit will create a "detached HEAD".
+As with SVN dependencies "somedir/path" is the path relative to the deployment root where the code will be placed in (git clone).
 
 
 ### PHP configuration
