@@ -30,7 +30,7 @@ $args = $con->readPHPArgv();
 array_shift($args);
 $options = $con->getopt2($args, 'vVd:');
 
-$usage_text = "Usage: wadf-undeploy [appname]\n";
+$usage_text = "Usage: wadf-undeploy [appname1][,appname2][,appname3][,...]\n";
 
 if (PEAR::isError($options)) {
 	print $usage_text;
@@ -70,7 +70,7 @@ if (!isset($options[1][0])) {
 		exit(5);
 	}
 } else {
-	$appref = $options[1][0];
+	$apprefs = explode(',', $options[1][0]);
 }
 
 if ($debug) {
@@ -78,45 +78,78 @@ if ($debug) {
 } else {
 	$initial_output_level = Tools_WADF::OUTPUT_NORMAL;
 }
-$WebDeploy = new Tools_WADF($appref, null, $wadf_macros, $initial_output_level);
 
-$deploy_path = $WebDeploy->resolveMacro('deploy_path');
-if (file_exists($deploy_path)) {
-	Tools_WADF::consoleOutput("Are you SURE you wish to COMPLETELY UNDEPLOY the application $appref at $deploy_path? This will remove everything associated with this application including:\n".
-	" - all files on the filesystem\n".
-	" - PEAR installs\n".
-	" - crontab entries\n (y/n):", false);
+$apps = array();
+$undeployables = array();
+$WebDeployStorage = new SplObjectStorage();
+foreach ($apprefs as $appref) {
+	$WebDeploy = new Tools_WADF($appref, null, $wadf_macros, $initial_output_level);
+	$deploy_path = $WebDeploy->resolveMacro('deploy_path');
+	if (file_exists($deploy_path)) {
+		$undeployables[$appref] = $deploy_path;
+		$apps[] = "[?]\t$appref at $deploy_path";
+	}
+	$WebDeployStorage->attach($WebDeploy);
+}
+
+if (!empty($apps)) {
+	$prompt  = "Are you SURE you wish to COMPLETELY UNDEPLOY:\n\n";
+	$prompt .= implode("\n", $apps);
+	$prompt .= "\n\nThis will remove all associations including:\n";
+	$prompt .= " - all files on the filesystem\n";
+	$prompt .= " - PEAR installs\n";
+	$prompt .= " - crontab entries\n (y/n):";
+	Tools_WADF::consoleOutput($prompt, false);
 	$confirm = strtolower(trim(fgets(STDIN)));
 	if ($confirm != 'y') {
 		print "Cancelled.\n";
 		exit(5);
 	}
-	$WebDeploy->resolveMacrosWithFallbacksInDir($deploy_path, true);
 }
 
-$db_undeploy = false;
-$in_use = $WebDeploy->enumerateMultipleEntities();
-$dbs = array(); 
-if (isset($in_use['db']) && count($in_use['db']) > 0) {
-	foreach ($in_use['db'] as $num) {
-		$host = $WebDeploy->resolveMacro("db${num}_host");
-		$name = $WebDeploy->resolveMacro("db${num}_name");
-		$type = $WebDeploy->resolveMacro("db${num}_type");
-		$dbs[] = "$type://$host/$name";
+$WebDeployStorage->rewind();
+$last_object_key = $WebDeployStorage->count() - 1;
+
+while ($WebDeployStorage->valid()) {
+
+	$WebDeploy = $WebDeployStorage->current();
+	$db_undeploy = false;
+	$appref = $WebDeploy->appref;
+
+	if (isset($undeployables[$appref])) {
+		$WebDeploy->resolveMacrosWithFallbacksInDir($undeployables[$appref], true);
 	}
-	print 'This site uses the following ' . (count($dbs) > 1 ? count($dbs) . ' ' : '') . 'database' . (count($dbs) > 1 ? 's' : '') . ":\n\n";
-	print implode("\n", $dbs) . "\n\n";
-	print "Do you want to PERMANENTLY REMOVE " . (count($dbs) > 1 ? 'these' : 'this') . "? (y/n):";
-	$db_undeploy = strtolower(trim(fgets(STDIN)));
 
-	if ($db_undeploy == 'y') {
-		$db_undeploy = true;
-	} else {
-		$db_undeploy = false;
+	$in_use = $WebDeploy->enumerateMultipleEntities();
+	$dbs = array();
+
+	if (isset($in_use['db']) && count($in_use['db']) > 0) {
+		foreach ($in_use['db'] as $num) {
+			$host = $WebDeploy->resolveMacro("db${num}_host");
+			$name = $WebDeploy->resolveMacro("db${num}_name");
+			$type = $WebDeploy->resolveMacro("db${num}_type");
+			$dbs[] = "$type://$host/$name";
+		}
+		$count_dbs = count($dbs);
+		print 'This site [' . $appref . '] uses the following ' . ($count_dbs > 1 ? $count_dbs . ' ' : '') . 'database' . ($count_dbs > 1 ? 's' : '') . ":\n\n";
+		print implode("\n", $dbs) . "\n\n";
+		print "Do you want to PERMANENTLY REMOVE " . (count($dbs) > 1 ? 'these' : 'this') . "? (y/n):";
+		$db_undeploy = strtolower(trim(fgets(STDIN)));
+
+		if ($db_undeploy == 'y') {
+			$db_undeploy = true;
+		} else {
+			$db_undeploy = false;
+		}
 	}
-}
 
-if (!$WebDeploy->checkOptionsRequiringInput()) {
-	exit(5);
+	if (!$WebDeploy->checkOptionsRequiringInput()) {
+		exit(5);
+	}
+	$WebDeploy->undeploy($db_undeploy, false) or exit(1);
+	if ($last_object_key == $WebDeployStorage->key()) {
+		$WebDeploy->restartWebserver();
+	}
+
+	$WebDeployStorage->next();
 }
-$WebDeploy->undeploy($db_undeploy) or exit(1);
