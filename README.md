@@ -1,6 +1,6 @@
 WADF - Web Application Deployment Framework
 =========================================================
-(c)2006-2012 Tim Jackson (tim@timj.co.uk)
+(c)2006-2019 Tim Jackson (tim@timj.co.uk)
 
 Introduction
 ------------
@@ -10,7 +10,7 @@ There are several key concepts and features:
 - Abstraction of all system (deployment)-specific information including database details, file paths etc.
  - includes generation of database, hostname and other details if required
 - Simple database management including setup of database server
-- PEAR Installer and SVN integration for dependency management
+- PEAR Installer, SVN and Git integration for dependency management
 - Webserver configuration management
  - includes ability to manage a local, user-controlled "micro" webserver for development on a local workstation
 - PHP-aware; supports both mod_php and CGI PHP installations
@@ -37,8 +37,8 @@ It will not work on Windows at present.
 
 
 
-User Guide for WADF 0.13.6
-=========================================================
+User Guide
+==========
 
 
 1. INSTALLING WADF

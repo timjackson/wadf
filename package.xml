@@ -10,10 +10,10 @@
   <email>tim@timj.co.uk</email>
   <active>yes</active>
  </lead>
- <date>2010-06-29</date>
+ <date>2019-11-11</date>
  <version>
-  <release>0.13.6a</release>
-  <api>0.13.6a</api>
+  <release>0.13.7</release>
+  <api>0.13.7</api>
  </version>
  <stability>
   <release>beta</release>
@@ -56,6 +56,7 @@
 		<tasks:replace from="@cfg_dir@" to="cfg_dir" type="pear-config"/>
 		<tasks:replace from="@package_version@" to="version" type="package-info"/>
 	</file>
+	<file name="README.md" role="doc"/>
 	<dir name="WADF" baseinstalldir="Tools">
 		<dir name="VCDriver">
 			<file name="Git.php" role="php"/>
@@ -65,7 +66,6 @@
 	</dir>
   	<dir name="docs">
 	  	<file name="Credits.txt" role="doc"/>
-  		<file name="wadf.txt" role="doc"/>
   		<file name="WorkstationHOWTO.odt" role="doc"/>
   		<file name="Upgrading.txt" role="doc"/>
   	</dir>
@@ -95,7 +95,7 @@
   </required>
   <optional>
   	<extension>
-  		<name>mysql</name>
+  		<name>mysqli</name>
   	</extension>
   </optional>
  </dependencies>
