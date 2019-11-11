@@ -362,7 +362,7 @@ class Tools_WADF {
 		
 		// deploy database
 		if (isset($in_use['db'])) {
-			if (!function_exists('mysql_connect')) {
+			if (!function_exists('mysqli_connect')) {
 				throw new Exception ("You need to install the mysql extension for PHP");
 			}
 			foreach ($in_use['db'] as $num) {
@@ -389,16 +389,16 @@ class Tools_WADF {
 				$db_deploy_user = $this->resolveMacro("db${num}_deploy_user");
 				$db_deploy_pass = $this->resolveMacro("db${num}_deploy_pass");
 			
-				$db = @mysql_connect($host, $db_deploy_user, $db_deploy_pass);
-				if (!is_resource($db)) {
-					throw new Exception("Could not connect to database (username=$db_deploy_user, password=$db_deploy_pass): ".mysql_error());
+				$db = @mysqli_connect($host, $db_deploy_user, $db_deploy_pass);
+				if (!$db) {
+					throw new Exception("Could not connect to database (username=$db_deploy_user, password=$db_deploy_pass): ".mysqli_error($db));
 				}
 			
 				if (in_array('create', $deploy_options)) {
-					mysql_query("CREATE DATABASE IF NOT EXISTS $name", $db);
+					mysqli_query($db, "CREATE DATABASE IF NOT EXISTS $name");
 				}
 				if (in_array('grant', $deploy_options)) {
-					mysql_query("GRANT ALL on $name.* to $user IDENTIFIED BY '$pass'", $db);
+					mysqli_query($db, "GRANT ALL on $name.* to $user IDENTIFIED BY '$pass'");
 				}
 				if (in_array('schema', $deploy_options)) {
 					// Remove existing database tables
@@ -410,7 +410,7 @@ class Tools_WADF {
 						if (file_exists($schema_path)) {
 							$this->_debugOutput("\tDeploying new schema for database $name as user $db_deploy_user...", self::DEBUG_GENERAL);
 							$cmd = "mysql $name -h $host -u $db_deploy_user ".(($db_deploy_pass != null) ? "-p$db_deploy_pass" : '')." < $dir/$schema 2>&1";
-							mysql_close($db);
+							mysqli_close($db);
 							exec($cmd, $out, $ret);
 							if ($ret != 0) {
 								throw new Exception('Error when deploying schema: ' . implode("\n", $out));
@@ -439,25 +439,25 @@ class Tools_WADF {
 				
 				$deploy_options = $this->_getDatabaseDeployOptions($num);
 				
-				$db = @mysql_connect($host, $db_deploy_user, $db_deploy_pass);
-				if (!is_resource($db)) {
-					throw new Exception("Could not connect to database (username=$db_deploy_user, password=$db_deploy_pass): " . mysql_error());
+				$db = @mysqli_connect($host, $db_deploy_user, $db_deploy_pass);
+				if (!$db) {
+					throw new Exception("Could not connect to database (username=$db_deploy_user, password=$db_deploy_pass): " . mysqli_error($db));
 				}
 				
 				if (in_array('grant', $deploy_options)) {
-					mysql_query("REVOKE ALL ON $name.*", $db);
+					mysqli_query($db, "REVOKE ALL ON $name.*");
 				}
 				if (in_array('create', $deploy_options)) {
 					$this->_debugOutput("Dropping database $name...", self::DEBUG_GENERAL);
-					$res = mysql_query("DROP DATABASE $name", $db);
+					$res = mysqli_query($db, "DROP DATABASE $name");
 					if ($res === false) {
 						$this->_debugOutput("Could not drop database $name", self::DEBUG_ERROR);
 					}
 				} else if (in_array('schema', $deploy_options)) {
 					$this->_removeDatabaseTables($name, $db);
 				}
-				
-				mysql_close($db);
+
+				mysqli_close($db);
 				// TODO remove DB users? But what if other site uses them?
 			}
 		}
@@ -491,40 +491,40 @@ class Tools_WADF {
 	protected function _removeDatabaseTables($dbname, $dbconn)
 	{
 		$this->_debugOutput("\tDeleting existing tables in database $dbname...", self::DEBUG_GENERAL);
-		$res = mysql_select_db($dbname, $dbconn);
+		$res = mysqli_select_db($dbconn, $dbname);
 		if ($res === false) {
-			throw new Exception("Could not select database $dbname: " . mysql_error($dbconn));
+			throw new Exception("Could not select database $dbname: " . mysqli_error($dbconn));
 		}
-		mysql_query('SET FOREIGN_KEY_CHECKS=0', $dbconn);
+		mysqli_query($dbconn, 'SET FOREIGN_KEY_CHECKS=0');
 		// MySQL 5.0+
-		$res = mysql_query("SELECT table_name,table_type FROM information_schema.tables WHERE table_schema='$dbname' AND table_type IN ('VIEW', 'BASE TABLE') ORDER BY table_name", $dbconn);
+		$res = mysqli_query($dbconn, "SELECT table_name,table_type FROM information_schema.tables WHERE table_schema='$dbname' AND table_type IN ('VIEW', 'BASE TABLE') ORDER BY table_name");
 		if ($res === false) {
 			// MySQL 3.x/4.x
-			$res = mysql_query('SHOW TABLES', $dbconn);
+			$res = mysqli_query($dbconn, 'SHOW TABLES');
 			if ($res === false) {
 				throw new Exception("Could not discover tables in database $dbname - SHOW TABLES failed");
 			} else {
-				while ($table = mysql_fetch_row($res)) {
-					$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
-					$res2 = mysql_query("DROP TABLE `" . $table[0] . "`", $dbconn);
+				while ($table = mysqli_fetch_row($res)) {
+					$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION);
+					$res2 = mysqli_query($dbconn, "DROP TABLE `" . $table[0] . "`");
 					if ($res2 === false) {
-						throw new Exception("Error dropping table $dbname.$table[0] :" . mysql_error($dbconn));
+						throw new Exception("Error dropping table $dbname.$table[0] :" . mysqli_error($dbconn));
 					}
 				}
 			}
 		} else {
-			while ($table = mysql_fetch_row($res)) {
+			while ($table = mysqli_fetch_row($res)) {
 				if ($table['1'] == 'VIEW') {
-					$this->_debugOutput("\t\tDropping view " . $table[0], self::DEBUG_INFORMATION); 
-					$res2 = mysql_query("DROP VIEW `" . $table[0] . "`", $dbconn);
+					$this->_debugOutput("\t\tDropping view " . $table[0], self::DEBUG_INFORMATION);
+					$res2 = mysqli_query($dbconn, "DROP VIEW `" . $table[0] . "`");
 					if ($res2 === false) {
-						throw new Exception("Error dropping view $dbname.$table[0] :" . mysql_error($dbconn));
+						throw new Exception("Error dropping view $dbname.$table[0] :" . mysqli_error($dbconn));
 					}
 				} else {
-					$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION); 
-					$res2 = mysql_query("DROP TABLE `" . $table[0] . "`", $dbconn);
+					$this->_debugOutput("\t\tDropping table " . $table[0], self::DEBUG_INFORMATION);
+					$res2 = mysqli_query($dbconn, "DROP TABLE `" . $table[0] . "`");
 					if ($res2 === false) {
-						throw new Exception("Error dropping table $dbname.$table[0] :" . mysql_error($dbconn));
+						throw new Exception("Error dropping table $dbname.$table[0] :" . mysqli_error($dbconn));
 					}
 				}
 			}
