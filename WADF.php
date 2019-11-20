@@ -400,10 +400,10 @@ class Tools_WADF {
 				}
 				if (in_array('grant', $deploy_options)) {
 					if ($db->server_version > 80000) {
-						$host = $this->resolveMacro("db${num}_user_host");
-						$this->_debugOutput("\tCreating user '{$user}'@'{$host}'");
-						mysqli_query($db, "CREATE USER IF NOT EXISTS '{$user}'@'{$host}' IDENTIFIED BY '{$pass}'");
-						mysqli_query($db, "GRANT ALL on {$name}.* to '{$user}'@'{$host}'");
+						$user_host = $this->resolveMacro("db${num}_user_host");
+						$this->_debugOutput("\tCreating user '{$user}'@'{$user_host}'");
+						mysqli_query($db, "CREATE USER IF NOT EXISTS '{$user}'@'{$user_host}' IDENTIFIED BY '{$pass}'");
+						mysqli_query($db, "GRANT ALL on {$name}.* to '{$user}'@'{$user_host}'");
 					} else {
 						mysqli_query($db, "GRANT ALL on {$name}.* to {$user} IDENTIFIED BY '{$pass}'");
 					}
