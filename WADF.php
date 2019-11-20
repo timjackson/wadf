@@ -80,7 +80,7 @@ class Tools_WADF {
 		'db(\d+)_name' => 'db_name',
 		'db(\d+)_host' => 'db_host',
 		'db(\d+)_user' => 'db_user',
-        'db(\d+)_user_host' => 'db_user_host',
+		'db(\d+)_user_host' => 'db_user_host',
 		'db(\d+)_pass' => 'db_pass',
 		'db(\d+)_schema' => 'db_schema',
 		'db(\d+)_deploy' => 'db_deploy',
@@ -399,14 +399,14 @@ class Tools_WADF {
 					mysqli_query($db, "CREATE DATABASE IF NOT EXISTS $name");
 				}
 				if (in_array('grant', $deploy_options)) {
-				    if ($db->server_version > 80000) {
-				        $host = $this->resolveMacro("db${num}_user_host");
-				        $this->_debugOutput("\tCreating user '{$user}'@'{$host}'");
-                        mysqli_query($db, "CREATE USER IF NOT EXISTS '{$user}'@'{$host}' IDENTIFIED BY '{$pass}'");
-                        mysqli_query($db, "GRANT ALL on {$name}.* to '{$user}'@'{$host}'");
-                    } else {
-                        mysqli_query($db, "GRANT ALL on {$name}.* to {$user} IDENTIFIED BY '{$pass}'");
-                    }
+					if ($db->server_version > 80000) {
+						$host = $this->resolveMacro("db${num}_user_host");
+						$this->_debugOutput("\tCreating user '{$user}'@'{$host}'");
+						mysqli_query($db, "CREATE USER IF NOT EXISTS '{$user}'@'{$host}' IDENTIFIED BY '{$pass}'");
+						mysqli_query($db, "GRANT ALL on {$name}.* to '{$user}'@'{$host}'");
+					} else {
+						mysqli_query($db, "GRANT ALL on {$name}.* to {$user} IDENTIFIED BY '{$pass}'");
+					}
 				}
 				if (in_array('schema', $deploy_options)) {
 					// Remove existing database tables
