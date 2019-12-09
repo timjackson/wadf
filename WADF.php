@@ -2,7 +2,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2012 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2019 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -398,7 +398,7 @@ class Tools_WADF {
 					mysqli_query($db, "CREATE DATABASE IF NOT EXISTS $name");
 				}
 				if (in_array('grant', $deploy_options)) {
-					mysqli_query($db, "GRANT ALL on $name.* to $user IDENTIFIED BY '$pass'");
+					mysqli_query($db, "GRANT ALL on $name.* to $user@'%' IDENTIFIED BY '$pass'");
 				}
 				if (in_array('schema', $deploy_options)) {
 					// Remove existing database tables
