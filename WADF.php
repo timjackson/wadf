@@ -399,13 +399,13 @@ class Tools_WADF {
 					mysqli_query($db, "CREATE DATABASE IF NOT EXISTS $name");
 				}
 				if (in_array('grant', $deploy_options)) {
+					$user_host = $this->resolveMacro("db${num}_user_host");
 					if ($db->server_version >= 80000) {
-						$user_host = $this->resolveMacro("db${num}_user_host");
 						$this->_debugOutput("\tCreating user '{$user}'@'{$user_host}'");
 						mysqli_query($db, "CREATE USER IF NOT EXISTS '{$user}'@'{$user_host}' IDENTIFIED BY '{$pass}'");
 						mysqli_query($db, "GRANT ALL on {$name}.* to '{$user}'@'{$user_host}'");
 					} else {
-						mysqli_query($db, "GRANT ALL on {$name}.* to {$user} IDENTIFIED BY '{$pass}'");
+						mysqli_query($db, "GRANT ALL on {$name}.* to '{$user}'@'{$user_host}' IDENTIFIED BY '{$pass}'");
 					}
 				}
 				if (in_array('schema', $deploy_options)) {
