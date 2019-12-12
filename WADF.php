@@ -2151,6 +2151,10 @@ class Tools_WADF {
 		if (isset($options['deploy_path'])) {
 			$this->_appendMacroDefs(array('deploy_path' => $options['deploy_path']));
 		}
+		// Further hack - in the default config, deploy_path depends on instance name (bug #463)
+		if (isset($options['instance'])) {
+			$this->_appendMacroDefs(array('instance' => $options['instance']));
+		}
 		$this->processLocalConfig($profile_override);
 		
 		// Read site instance file

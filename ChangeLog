@@ -1,4 +1,14 @@
 #######################################################################
+# v0.13.8 (unreleased)
+#######################################################################
+New features:
+- Add support for MySQL 8 (Adam Ladanyi)
+
+Changes/improvements:
+- Workaround for bug #463: .wadf-instance from primary instance leaks macros to 
+  other instances
+
+#######################################################################
 # v0.13.7 (2019-11-11)
 #######################################################################
 New features:
