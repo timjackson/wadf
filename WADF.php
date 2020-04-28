@@ -1227,7 +1227,8 @@ class Tools_WADF {
 				$this->_runPEAR("channel-update pear", false, false);
 			}
 		} else {
-			$this->_runPEAR($this->_getPEARCmd() . ' config-get bin_dir', $output);
+			// Don't change this to _runPEAR - we need the raw output
+			exec($this->_getPEARCmd() . ' config-get bin_dir', $output);
 			$pear_path = $output[0];
 			$this->_debugOutput("Using existing PEAR installation in $pear_path", self::DEBUG_INFORMATION);
 		}
