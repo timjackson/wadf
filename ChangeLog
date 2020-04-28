@@ -1,6 +1,11 @@
 #######################################################################
 # v0.13.9a (unreleased)
 #######################################################################
+New features:
+- Add dep_pear_force_pear_version, to force a specific version of the PEAR
+  package to be installed, when creating a standalone PEAR install (e.g. in case
+  of incompatibilities)
+
 Bugs fixed:
 - Failure using system-installed (or user-installed) PEAR when
   dep_pear_deploy_path is empty
