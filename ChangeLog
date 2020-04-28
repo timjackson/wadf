@@ -9,6 +9,8 @@ New features:
 Bugs fixed:
 - Failure using system-installed (or user-installed) PEAR when
   dep_pear_deploy_path is empty
+- App deploy: Tries to deploy database even if user replies "no" to command line
+  prompt deploying
 
 #######################################################################
 # v0.13.8 (2019-12-12)
