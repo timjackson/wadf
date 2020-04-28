@@ -1222,7 +1222,9 @@ class Tools_WADF {
 					
 				$this->_debugOutput("PEAR dependencies found; creating a PEAR installation in $pear_path (config file is $pear_config_file)...", self::DEBUG_GENERAL);
 				
-				$cmd = "pear ".$this->_getPEARVerbosity()." -c $pear_config_file install --onlyreqdeps pear.php.net/PEAR";
+				$pear_version = $this->resolveMacro('dep_pear_restrict_version');
+				$pear_package = empty($pear_version) ?  'pear.php.net/PEAR' : "pear.php.net/PEAR-{$pear_version}";
+				$cmd = "pear {$this->_getPEARVerbosity()} -c {$pear_config_file} install --onlyreqdeps {$pear_package}";
 				$this->_runPEAR($cmd);
 				$this->_runPEAR("channel-update pear", false, false);
 			}
