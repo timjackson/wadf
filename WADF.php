@@ -2,7 +2,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2012 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2020 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -2662,7 +2662,7 @@ class Tools_WADF {
 	
 	public static function getAboutText()
 	{
-		return "WADF version " . Tools_WADF::SWVERSION . " copyright 2006-2010 Tim Jackson (tim@timj.co.uk)\n\n".
+		return "WADF version " . Tools_WADF::SWVERSION . " copyright 2006-2020 Tim Jackson (tim@timj.co.uk)\n\n".
 		"This program is free software: you can redistribute it and/or modify\n".
 		"it under the terms of version 3 of the GNU General Public License as\n".
 		"published by the Free Software Foundation.\n\n".
