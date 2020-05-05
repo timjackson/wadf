@@ -1,6 +1,6 @@
 WADF - Web Application Deployment Framework
 =========================================================
-(c)2006-2019 Tim Jackson (tim@timj.co.uk)
+(c)2006-2020 Tim Jackson (tim@timj.co.uk)
 
 Introduction
 ------------
