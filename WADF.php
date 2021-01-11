@@ -2,7 +2,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2020 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2021 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -804,8 +804,12 @@ class Tools_WADF {
 		@unlink($vhost_config);
 		
 		$php_type = $this->resolveMacro('php_type');
-		if (preg_match('/^cgi:(.+)$/', $php_type, $matches)) {
+		if (preg_match('/^(cgi|fpm):(.+)$/', $php_type, $matches)) {
 			$php_ini_dest = trim($matches[1]);
+			if (substr($php_type, 0, 3) == 'fpm' && $php_ini_dest == 'local') {
+				$home = getenv('HOME');
+				$php_ini_dest = $home .'/.wadf/php-fpm-intermediate.d/'. $this->resolveMacro('instance') .'.conf';
+			}
 			@unlink($php_ini_dest);
 		}
 	}
@@ -942,6 +946,50 @@ class Tools_WADF {
 					System::mkdir(array('-p', $dest_dir));
 				}
 				file_put_contents($php_ini_dest, $source);
+			}
+		} else if (preg_match('/^fpm:(.+)$/', $php_type, $matches)) {
+			$fpm_dest = trim($matches[1]);
+			if ($fpm_dest == 'local') {
+				$home = getenv('HOME');
+				$fpm_dest = $home .'/.wadf/php-fpm-intermediate.d/'. $this->resolveMacro('instance') .'.conf';
+			}
+			$php_ini = $this->resolveMacro('php_config_location');
+			$php_ini_source = $dir . '/' . $php_ini;
+			if (file_exists($php_ini_source)) {
+				$this->_debugOutput("Deploying intermediate PHP-FPM config file to $fpm_dest...", self::DEBUG_GENERAL);
+				
+				$source = file_get_contents($php_ini_source);
+				$php_ini_local = trim($this->resolveMacro('php_config_location_extra'));
+				if ($php_ini_local != '@php_config_location_extra@' && !empty($php_ini_local)) {
+					$extras = file_get_contents($php_ini_local);
+					$source .= "\n; PHP directives processed from $php_ini_local\n" . $extras;
+				}
+				$dest_dir = dirname($fpm_dest);
+				if (!file_exists($dest_dir)) {
+					$this->_debugOutput("Creating directory $dest_dir for deployment of intermediate PHP-FPM config file...", self::DEBUG_GENERAL);
+					System::mkdir(array('-p', $dest_dir));
+				}
+
+				$fpm_php_config = "; This is an incomplete FPM config which will need additional pool-related parameters adding above this line\n";
+				$lines = explode(PHP_EOL, $source);
+				foreach ($lines as $line) {
+					$line = trim($line);
+					unset($matches);
+					if (preg_match('/^([a-z0-9_\.]+)\s*=(.+)/i', $line, $matches)) {
+						$key = trim($matches[1]);
+						$value = trim($matches[2]);
+						if ((strtolower($value) == 'on' || strtolower($value) == 'off')) {
+							$fpm_php_config .= "php_flag[$key] = $value\n";
+						} else {
+							$fpm_php_config .= "php_value[$key] = $value\n";
+						}
+					} else if (strlen($line) > 0 && $line{0} == ';') { // pass through comments
+						$fpm_php_config .= $line . "\n";
+					}
+				}
+
+
+				file_put_contents($fpm_dest, $fpm_php_config);
 			}
 		} else {
 			throw new Exception("Unknown PHP type '$php_type'");

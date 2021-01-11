@@ -3,7 +3,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2009 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2021 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -22,6 +22,10 @@ set_include_path('.:@php_dir@');
 
 require_once 'Tools/WADF.php';
 require_once 'Console/Getopt.php'; // this is from PEAR
+require_once 'System.php'; // this is from PEAR
+
+$WADF = new Tools_WADF('temp-null');
+$php_type = $WADF->resolveMacro('php_type');
 
 set_exception_handler(array('Tools_WADF', 'cmdlineHandleException'));
 
@@ -41,6 +45,13 @@ $errlogfile = "$WADF_HOME/httpd.error_log";
 $vhost_dir = "$WADF_HOME/vhosts";
 $default_vhost_file = "$vhost_dir/00-default.conf";
 $default_error_page = "$WADF_HOME/default_error_page.html";
+
+$fpm_config = "$WADF_HOME/run/php-fpm.conf";
+$fpm_intermediate_conf_dir = "$WADF_HOME/php-fpm-intermediate.d"; // "Raw" config files without the pool settings
+$fpm_pidfile = "$WADF_HOME/run/php-fpm.pid";
+$fpm_sock_dir = "$WADF_HOME/run/php-fpm";
+$fpm_errlogfile = "$WADF_HOME/logs/php-fpm.error_log";
+
 $prog = 'WADF HTTPD instance';
 
 $con = new Console_Getopt;
@@ -99,6 +110,7 @@ $out = array();
 function start($show_instance_info=null)
 {
 	global $prog, $ret, $out, $httpd, $conffile, $pidfile, $portfile, $lockfile, $errlogfile, $vhost_dir, $source_conffile, $WADF_HOME, $default_vhost_file, $default_error_page;
+
 	if (file_exists($pidfile)) {
 		if (is_really_running(trim(file_get_contents($pidfile)))) {
 			print "$prog is already running\n";
@@ -134,6 +146,8 @@ function start($show_instance_info=null)
 		fclose($fp);
 	}
 	
+	startFPM();
+	
 	echo "Starting $prog: ";
 	
 	check_config();
@@ -166,9 +180,79 @@ function start($show_instance_info=null)
 	}
 }
 
+function startFPM()
+{
+	global $php_type, $fpm_config, $fpm_pidfile, $fpm_errlogfile, $fpm_sock_dir, $fpm_intermediate_conf_dir;
+	if ($php_type == 'fpm:local') {
+		if (!file_exists($fpm_sock_dir)) {
+			System::mkdir(array('-p', $fpm_sock_dir));
+		}
+		$dir = dirname($fpm_errlogfile);
+		if (!file_exists($dir)) {
+			System::mkdir(array('-p', $dir));
+		}
+
+		generateFPMConfig();
+
+		$fpm_is_running = false;
+		if (file_exists($fpm_pidfile)) {
+			if (is_really_running(trim(file_get_contents($fpm_pidfile)))) {
+				print "PHP-FPM is already running\n";
+				$fpm_is_running = true;
+			} else {
+				cleanup_fpm_instance();
+			}
+		}
+
+		if (!$fpm_is_running) {
+			echo "Starting WADF PHP-FPM instance:";
+			$cmd = "php-fpm --pid $fpm_pidfile --fpm-config $fpm_config";
+			exec($cmd, $out, $ret);
+			if ($ret == 0) {
+				do_output();
+			} else {
+				do_output();
+				$out[] = "PHP-FPM failed to start correctly";
+			}
+		}
+	}
+}
+
+function generateFPMConfig()
+{
+	global $fpm_intermediate_conf_dir, $fpm_sock_dir, $fpm_errlogfile, $fpm_config;
+	$files = scandir($fpm_intermediate_conf_dir);
+	$fpm_config_contents = "[global]\nerror_log=$fpm_errlogfile\n\n";
+	foreach ($files as $file) {
+		unset($matches);
+		if (preg_match('/^(.+)\.conf$/', $file, $matches)) {
+			$app = $matches[1];
+			$fpm_config_contents .= "[$app]\nlisten=$fpm_sock_dir/$app.sock\npm=ondemand\npm.max_children=10\n\n";
+			$fpm_config_contents .= file_get_contents($fpm_intermediate_conf_dir . '/' . $file) . "\n\n";
+		}
+	}
+
+	file_put_contents($fpm_config, $fpm_config_contents);
+}
+
 function stop()
 {
-	global $httpd, $prog, $ret, $out, $pidfile, $conffile;
+	global $httpd, $prog, $ret, $out, $pidfile, $conffile, $php_type, $fpm_pidfile;
+
+	if ($php_type == 'fpm:local') {
+		if (file_exists($fpm_pidfile)) {
+			$pid = file_get_contents(trim($fpm_pidfile));
+			if (is_really_running($pid)) {
+				echo "Stopping WADF PHP-FPM instance: ";
+				exec("kill $pid", $out, $ret);
+				echo "[ OK ]\n";
+			} else {
+				print "PHP-FPM is not running\n";
+			}
+		}
+	}
+	cleanup_fpm_instance();
+
 	if (!file_exists($pidfile)) {
 		print "$prog is not running\n";
 		exit(0);
@@ -186,9 +270,35 @@ function stop()
 	}
 }
 
+function reloadFPM()
+{
+	global $fpm_pidfile;
+
+	generateFPMConfig();
+
+	// TODO check FPM config
+	if (file_exists($fpm_pidfile)) {
+		$pid = trim(file_get_contents($fpm_pidfile));
+		if (is_really_running($pid)) {
+			echo "Reloading WADF PHP-FPM instance: ";
+			exec("kill -USR2 $pid", $out, $ret);
+			print "[ OK ]\n";
+		} else {
+			$out[] = "WADF PHP-FPM instance is not running; starting\n";
+			start();
+		}
+	} else {
+		$out[] = "WADF PHP-FPM instance is not running; starting\n";
+		start();
+	}
+}
+
 function reload($show_instance_info=null)
 {
 	global $prog, $ret, $out, $conffile, $httpd, $pidfile;
+	
+	reloadFPM();
+
 	echo "Reloading $prog: ";
 	check_config();
 	if ($ret !== 0) {
@@ -198,7 +308,7 @@ function reload($show_instance_info=null)
 		if (file_exists($pidfile)) {
 			$pid = trim(file_get_contents($pidfile));
 			if (is_really_running($pid)) {
-				exec("kill -HUP ".file_get_contents(trim($pidfile)), $out, $ret);
+				exec("kill -HUP $pid", $out, $ret);
 				if ($ret == 0) {
 					list_vhosts($show_instance_info);
 				}
@@ -330,6 +440,15 @@ switch ($command) {
 		break;
 		
 	case 'status':
+		if (file_exists($fpm_pidfile)) {
+			$pid = trim(file_get_contents($fpm_pidfile));
+			if (is_really_running($pid)) {
+				echo "WADF PHP-FPM instance is running (pid $pid)\n";
+			} else {
+				cleanup_fpm_instance();
+				echo "WADF PHP-FPM instance is not running\n";
+			}
+		}
 		if (file_exists($pidfile)) {
 			$pid = trim(file_get_contents($pidfile));
 			if (is_really_running($pid)) {
@@ -414,6 +533,14 @@ function is_really_running($pid)
 function cleanup_instance()
 {
 	$files = array('pidfile', 'portfile', 'lockfile', 'errlogfile', 'default_vhost_file', 'default_error_page');
+	foreach ($files as $file) {
+		@unlink($GLOBALS[$file]);
+	}
+}
+
+function cleanup_fpm_instance()
+{
+	$files = array('fpm_pidfile', 'fpm_errlogfile','fpm_config');
 	foreach ($files as $file) {
 		@unlink($GLOBALS[$file]);
 	}

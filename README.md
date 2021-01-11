@@ -1,6 +1,6 @@
 WADF - Web Application Deployment Framework
 =========================================================
-(c)2006-2020 Tim Jackson (tim@timj.co.uk)
+(c)2006-2021 Tim Jackson (tim@timj.co.uk)
 
 Introduction
 ------------
@@ -13,7 +13,7 @@ There are several key concepts and features:
 - PEAR Installer, SVN and Git integration for dependency management
 - Webserver configuration management
  - includes ability to manage a local, user-controlled "micro" webserver for development on a local workstation
-- PHP-aware; supports both mod_php and CGI PHP installations
+- PHP-aware; supports both mod_php, PHP-FPM and CGI PHP installations
 
 Principles
 ----------
@@ -195,14 +195,21 @@ As with SVN dependencies "somedir/path" is the path relative to the deployment r
 
 ### PHP configuration
 
-PHP configuration varies according to the environment. If you are using mod_php (that is, PHP installed as an Apache HTTPD module), the PHP directives are typically included in the Apache config, as part of the <VirtualHost ...> section, for example:
+PHP configuration varies according to the environment. Three options are supported:
+
+- mod_php
+- PHP-FPM
+- Generic CGI variant (including FastCGI via mod_fcgid)
+
+If you are using mod_php (that is, PHP installed as an Apache HTTPD module), the PHP directives are typically included in the Apache config, as part of the <VirtualHost ...> section, for example:
 ```
 php_admin_flag engine on
 ```
-However, for PHP running as a CGI, the directives are usually stored in a separate php.ini file.
+However, for PHP running as a CGI, the directives are usually stored in a separate php.ini file. Similarly, PHP-FPM has its own configuration file, with the PHP option defined in a different format.
 
-WADF is aware of both types of PHP configuration and explicitly supports them via the "php_type" configuration parameter. In either case, it expects to find a file called "php.ini" in the root of the site (this will normally be pre-templated as php.ini.template). Then, when deploying a site, WADF inserts PHP directives in the appropriate place.
+WADF supports these different types of configuration via the "php_type" configuration parameter. In all cases, it expects to find a file called "php.ini" in the root of the site (this will normally be pre-templated as php.ini.template). Then, when deploying a site, WADF inserts PHP directives in the appropriate place.
 - If "php_type" is set to "mod_php", then it converts the directives to Apache config style and inserts them in the VirtualHost. It also converts comments from the php.ini "; comment" format to the Apache "# comment" format.
+- If "php_type" is set to "fpm:/path/to/file" then it creates a FPM-style list of PHP configuration directives in "/path/to/file". Note that this is not a full-blown PHP-FPM config; it will need to be appended to a normal FPM config. For local development purposes, you can use "fpm:local", in which case WADF creates a ready-to-run FPM config in ~/.wadf (the full config is created when "wadf-httpd start" is run)
 - If "php_type" is set to "cgi:/path/to/file" then it simply copies the ini file to "/path/to/file" ready to be used by the CGI interpreter.
 
 Example php.ini:
@@ -337,14 +344,14 @@ No comments are permitted in the file. There are no profile sections in the file
 
 6. THE WADF MICRO HTTP SERVER
 ---------------------------------------------------------
-WADF can start up local instances of Apache running as the current user - meaning that a complete development environment that closely simulates a live environment can be set up without requiring special privileges.
+WADF can start up local instances of Apache HTTPD running as the current user - meaning that a complete development environment that closely simulates a live environment can be set up without requiring special privileges. It uses the system-installed copy of Apache HTTPD.
 
 You do not have to use the WADF micro HTTP server at all, if you don't want to. If you do, it is controlled via the "wadf-httpd" script which is described fully in the next section, "Command Line Usage". You will need to set the following WADF options:
 ```ini
 webserver_restart_cmd = wadf-httpd reloadstart
 vhost_config_path = /home/@user@/.wadf/vhosts (NB this path is currently "special" - do not change it)
 ```
-When first running the wadf-httpd server, a sample config is set up in ~/.wadf/httpd.conf. You can then amend this file as you see fit.
+When first running the wadf-httpd server, a sample config is set up in ~/.wadf/httpd.conf. As the definition of a working httpd.conf varies a lot between OS variants and even versions, you're likely to need to customise this.
 
 After starting the WADF HTTP server, a number of additional files will be generated in ~/.wadf by default (that is, assuming you don't change the default WADF Apache config):
 
@@ -354,6 +361,11 @@ After starting the WADF HTTP server, a number of additional files will be genera
 - httpd.pid - a file containing the running process ID of the server. Leave this alone as it is used by the wadf-httpd script.
 - default_error_page.html - a file with a list of the deployed applications, shown if you access the local WADF HTTP server over an unconfigured interface
 - vhosts/00-default.html - the virtual host to trigger the default error page
+
+If the WADF configuration option 'php_type' is set to "fpm:local", wadf-httpd will also start a PHP-FPM instance running as the current user. It will generate a temporary FPM config file in "run/php-fpm.conf" You'll need to ensure your vhost config passes through PHP requests to this instance. You can do this, for example, by setting the WADF 'vhost_config_append' option as follows, adjusting "/path/to/home" accordingly:
+
+vhost_config_append = "<Proxy \"unix:/path/to/home/.wadf/run/php-fpm/@instance@.sock|fcgi://php-fpm\">\n\tProxySet disablereuse=off\n</Proxy>\n<FilesMatch \.php$>\n<If \"-f '%{SCRIPT_FILENAME}'\">\n\tSetHandler proxy:fcgi://php-fpm\n</If>\n</FilesMatch>"
+
 
 
 7. COMMAND LINE USAGE
@@ -390,6 +402,7 @@ Time-saving options:
 - Dependency deployment can be skipped with "--no-deps", and use of dependency tags can be avoided with "--no-dep-tags".
 - You can redeploy the database only with "--db-only".
 - You can process templates only with "--templates-only" (shortcut for "--no-deps --no-kickstart")
+- You can deploy local DNS only with "--dns-only"
 
 
 ### wadf-list-macros [-a] [`<appref>`]
@@ -406,7 +419,7 @@ Remove files generated from templates from the working directory
 
 ### wadf-httpd `<action>`
 
-For workstation-based development, controls the Apache HTTPD webserver running as the current user.
+For workstation-based development, controls the WADF Apache HTTPD webserver instance (and, if relevant, PHP-FPM instance) running as the current user.
 
 `<action>` is one of the following:
 - `start`: Start the webserver
@@ -428,7 +441,7 @@ Listening on port 10080; configured for the following applications:
  someapp: (/path/to/someapp) ver=DEVTR:1234
    http://someapp.mypc.example.com:10080
 
- otherapp: (/path/to/otherap) ver=DEVTR:4870
+ otherapp: (/path/to/otherapp) ver=DEVTR:4870
    http://otherapp.mypc.example.com:10080
 *******************************************
 ```
