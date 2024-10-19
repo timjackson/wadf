@@ -961,8 +961,10 @@ class Tools_WADF {
 				$source = file_get_contents($php_ini_source);
 				$php_ini_local = trim($this->resolveMacro('php_config_location_extra'));
 				if ($php_ini_local != '@php_config_location_extra@' && !empty($php_ini_local)) {
-					$extras = file_get_contents($php_ini_local);
-					$source .= "\n; PHP directives processed from $php_ini_local\n" . $extras;
+					if (file_exists($php_ini_local)) {
+						$extras = file_get_contents($php_ini_local);
+						$source .= "\n; PHP directives processed from $php_ini_local\n" . $extras;
+					}
 				}
 				$dest_dir = dirname($fpm_dest);
 				if (!file_exists($dest_dir)) {
