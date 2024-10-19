@@ -192,8 +192,6 @@ function startFPM()
 			System::mkdir(array('-p', $dir));
 		}
 
-		generateFPMConfig();
-
 		$fpm_is_running = false;
 		if (file_exists($fpm_pidfile)) {
 			if (is_really_running(trim(file_get_contents($fpm_pidfile)))) {
@@ -205,6 +203,8 @@ function startFPM()
 		}
 
 		if (!$fpm_is_running) {
+			generateFPMConfig();
+
 			echo "Starting WADF PHP-FPM instance:";
 			$cmd = "php-fpm --pid $fpm_pidfile --fpm-config $fpm_config";
 			exec($cmd, $out, $ret);
@@ -540,6 +540,7 @@ function cleanup_instance()
 
 function cleanup_fpm_instance()
 {
+	// TODO remove dead socket files
 	$files = array('fpm_pidfile', 'fpm_errlogfile','fpm_config');
 	foreach ($files as $file) {
 		@unlink($GLOBALS[$file]);
