@@ -3,7 +3,7 @@
 
 /*
     Web Application Deployment Framework
-    (c)2006-2021 Tim Jackson (tim@timj.co.uk)
+    (c)2006-2024 Tim Jackson (tim@timj.co.uk)
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of version 3 of the GNU General Public License as
@@ -221,6 +221,9 @@ function startFPM()
 function generateFPMConfig()
 {
 	global $fpm_intermediate_conf_dir, $fpm_sock_dir, $fpm_errlogfile, $fpm_config;
+	if (!file_exists($fpm_intermediate_conf_dir)) {
+		System::mkdir(array('-p', $fpm_intermediate_conf_dir));
+	}
 	$files = scandir($fpm_intermediate_conf_dir);
 	$fpm_config_contents = "[global]\nerror_log=$fpm_errlogfile\n\n";
 	foreach ($files as $file) {
