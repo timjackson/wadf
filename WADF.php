@@ -842,7 +842,7 @@ class Tools_WADF {
 				$force_remove = false;
 				$file = trim($file);
 				if (strlen($file) > 0) {
-					if ($file{0} == '+') { // force removal even if template doesn't exist
+					if (substr($file, 0, 1) == '+') { // force removal even if template doesn't exist
 						$file = substr($file, 1);
 						$force_remove = true;
 					}
@@ -898,7 +898,7 @@ class Tools_WADF {
 						if (in_array(strtolower($directive_value), array('0','1','on','off'))) {
 							$directive_type = 'flag';
 						} else {
-							if (strpos($directive_value, ' ') && $directive_value{0} != '"') {
+							if (strpos($directive_value, ' ') && substr($directive_value, 0, 1) != '"') {
 								$directive_value = '"' . $directive_value . '"';
 							}
 						}
@@ -983,7 +983,7 @@ class Tools_WADF {
 						} else {
 							$fpm_php_config .= "php_value[$key] = $value\n";
 						}
-					} else if (strlen($line) > 0 && $line{0} == ';') { // pass through comments
+					} else if (strlen($line) > 0 && substr($line,0,1) == ';') { // pass through comments
 						$fpm_php_config .= $line . "\n";
 					}
 				}
@@ -1529,7 +1529,7 @@ class Tools_WADF {
 		$lines = explode("\n", $contents);
 		foreach ($lines as $line) {
 			$line = trim($line);
-			if (!empty($line) && $line{0} != '#' && $line{0} != ';') { // comments
+			if (!empty($line) && substr($line,0,1) != '#' && substr($line,0,1) != ';') { // comments
 				// lines are in format "deptype:depdetails" (see docs/wadf.txt for format details)
 				if (preg_match("/^([a-z0-9]{2,10}):(.+)$/i", $line, $matches)) {
 					if ($matches[1] == Tools_WADF::DEPENDENCY_TYPE_PEAR) {
@@ -2362,7 +2362,7 @@ class Tools_WADF {
 	 *               deploy_version
 	 *               vhosts (array of hostname, interface, description[optional])
 	 */
-	public function getDeployedVhosts($vhost_dir)
+	public static function getDeployedVhosts($vhost_dir)
 	{
 		$dir = dir($vhost_dir);
 		$vhosts = array();

@@ -247,7 +247,7 @@ class Tools_WADF_VCDriver_SVN implements Tools_WADF_VCDriver_Interface
 			$dep->local_relative_path = $parts[3];
 			
 			// Strip leading slashes; dep tags are always relative to the site root
-			if ($dep->local_relative_path{0} == '/') {
+			if (substr($dep->local_relative_path,0,1) == '/') {
 				$dep->local_relative_path = substr($dep->local_relative_path, 1);
 			}
 
