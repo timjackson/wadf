@@ -308,9 +308,10 @@ class Tools_WADF {
 	 * Remove a deployment
 	 * 
 	 * @param bool $remove_db  Whether or not to remove databases that are part of the deployment
+	 * @param bool $restart_server  Whether or not to restart webserver
 	 * @return void
 	 */
-	public function undeploy($remove_db=false)
+	public function undeploy($remove_db=false, $restart_server=true)
 	{
 		$dir = $this->resolveMacro('deploy_path');
 		if ($remove_db) {
@@ -320,7 +321,9 @@ class Tools_WADF {
 		$this->undeployDNS();
 		$this->undeployVhost();
 		$this->undeployDependencies($dir);
-		$this->restartWebserver();
+		if ($restart_server) {
+			$this->restartWebserver();
+		}
 		
 		$this->_debugOutput("Removing directory $dir...", self::DEBUG_GENERAL);
 		$this->_rmDir($dir);
